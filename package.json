@@ -1,0 +1,32 @@
+{
+  "name": "mangasnatcher",
+  "version": "1.0.0",
+  "description": "Webscraping app to get updates of manga chapters.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "ts-node-dev --respawn --transpile-only ./src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RaulAkerman/MangaSnatcher.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RaulAkerman/MangaSnatcher/issues"
+  },
+  "homepage": "https://github.com/RaulAkerman/MangaSnatcher#readme",
+  "dependencies": {
+    "axios": "^1.4.0",
+    "cheerio": "^1.0.0-rc.12",
+    "discord.js": "^14.11.0",
+    "dotenv": "^16.3.1",
+    "puppeteer": "^20.7.4",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.1.6"
+  }
+}
