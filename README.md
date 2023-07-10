@@ -10,7 +10,3 @@ MangaSnatcher is a Discord bot that provides server updates on watched manga ser
 - **Rich Embeds**: The bot sends richly formatted Discord embed messages with relevant information about the manga updates, making it visually appealing and easy to read.
 - **Command-Based Interface**: The bot provides a set of commands that users can use to interact with it, manage their watchlist, customize settings, and more.
 - **Scheduled Scraping**: The bot automatically scrapes manga websites at regular intervals to check for updates and provide timely notifications to server members.
-
-## Setup
-
-1. **Clone the repository**: Start by cloning the MangaSnatcher repository to your local machine.
