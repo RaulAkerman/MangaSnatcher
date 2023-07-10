@@ -19,14 +19,22 @@
   },
   "homepage": "https://github.com/RaulAkerman/MangaSnatcher#readme",
   "dependencies": {
+    "@prisma/client": "4.16.2",
+    "@types/pg": "^8.10.2",
     "axios": "^1.4.0",
     "cheerio": "^1.0.0-rc.12",
     "discord.js": "^14.11.0",
     "dotenv": "^16.3.1",
+    "node-schedule": "^2.1.1",
+    "pg": "^8.11.1",
+    "prisma": "^4.16.2",
     "puppeteer": "^20.7.4",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.1.6"
+  },
+  "devDependencies": {
+    "@types/node-schedule": "^2.1.0"
   }
 }
