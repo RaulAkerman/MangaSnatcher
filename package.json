@@ -34,9 +34,7 @@
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.1.6"
-  },
-  "devDependencies": {
+    "typescript": "^5.1.6",
     "@types/node-schedule": "^2.1.0"
   }
 }
