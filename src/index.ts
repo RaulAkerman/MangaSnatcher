@@ -3,7 +3,7 @@ import pupeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import prisma from "./prisma";
 import * as schedule from "node-schedule";
-import { Client, Events, GatewayIntentBits, Guild, managerToFetchingStrategyOptions } from "discord.js";
+import { Client, Events, GatewayIntentBits, Guild, channelLink, managerToFetchingStrategyOptions } from "discord.js";
 import { map, next } from "cheerio/lib/api/traversing";
 import { Message } from "discord.js";
 import AsuraScans from "./scraper/modules/asurascans";
@@ -73,6 +73,8 @@ pupeteer.use(StealthPlugin());
         await message.channel.send(`Sorry, ${domainName} is not an supported domain.`);
         return;
       }
+
+      message.channel.send(`Adding!`);
 
       //Set seriesTitle depending on the domain name
       let seriesTitle = "";
