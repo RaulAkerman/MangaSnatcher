@@ -4,8 +4,8 @@ import AsuraScans from "./modules/asurascans"
 
 export enum ScraperSource {
   MangaDex = "MangaDex",
-  AsuraScans = "AsuraScans",
-  MangaSee = "MangaSee",
+  AsuraScans = "asurascans.com",
+  MangaSee = "mangasee123.com",
 }
 
 export interface ScraperResult {
