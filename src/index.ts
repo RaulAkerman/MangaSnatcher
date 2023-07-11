@@ -120,7 +120,14 @@ pupeteer.use(StealthPlugin());
         return;
       }
 
-      const seriesTitle = await asurascans.getTitleName(url, browser);
+      //Set seriesTitle depending on the domain name
+
+      let seriesTitle = "";
+      if (domainName === "asurascans.com") {
+        seriesTitle = await asurascans.getTitleName(url, browser);
+      } else if (domainName === "mangasee123.com") {
+        seriesTitle = await mangasee.getTitleName(url, browser);
+      }
 
       console.log(seriesTitle);
       console.log(domainName);
@@ -145,12 +152,7 @@ pupeteer.use(StealthPlugin());
           guildId: message.guildId!,
         },
       });
-      // Title | Source
-      await message.channel.send(`Here are the series you are watching:\n${series.map((s) => s.title).join("\n")}`);
-    }
-
-    if (message.content.startsWith("!test")) {
-      await test(browser, message.guild!);
+      await message.channel.send(`Here are the series you are watching:\n${series.map((s) => s.title + " : " + s.url).join("\n")}`);
     }
   });
 
@@ -160,142 +162,142 @@ pupeteer.use(StealthPlugin());
   console.log("Running");
 })().catch((e) => console.error(e));
 
-// Currently runs every 3 hours
 // To run every 6 hours, change the first argument to "0 */6 * * *"
 // To run every 12 hours, change the first argument to "0 */12 * * *"
 // To run every 30 minutes change the first argument to "*/30 * * * *"
 // To run every minute change the first argument to "* * * * *"
-const test = async (browser: Browser, guildid: Guild) => {
-  console.log("Running job at time: ", new Date().toLocaleString());
-  const asurascans = new AsuraScans();
-  const mangasee = new MangaSee();
 
-  //Find all URLs that have MangaSee as the source
-  const mangaSeeUrls = await prisma.series
-    .findMany({
-      where: {
-        source: "mangasee123.com",
-      },
-    })
-    .then((series) => series.map((s) => s.url));
+const job = schedule.scheduleJob("* */6 * * *", async function () {
+    console.log("Running job at time: ", new Date().toLocaleString());
+    const browser = await pupeteer.launch({ headless: true, dumpio: true });
+    const asurascans = new AsuraScans();
+    const mangasee = new MangaSee();
 
-  //Find series names and latest chapters
-  const NameLatestChapterMap = await prisma.series
-    .findMany()
-    .then((series) => series.map((s) => ({ name: s.title, latestChapter: s.latestChapter, source: s.source })));
-
-  console.log(NameLatestChapterMap);
-
-  const asuraResults = (await asurascans.scrape(browser)).filter((manga) => {
-    const nameLatestChapter = NameLatestChapterMap.find((n) => n.name === manga.title && n.source === manga.source);
-    if (!nameLatestChapter) {
-      return false;
-    }
-    const latestChapter = nameLatestChapter.latestChapter;
-    if (latestChapter === manga.latestChapter) {
-      return false;
-    }
-    console.log("OLD CHAPTER: " + latestChapter);
-    console.log("NEW CHAPTER: " + manga.latestChapter);
-    return "true";
-  });
-
-  //Check if manga has a new chapter
-  const mangaSeeResults = (await mangasee.scrape(browser, mangaSeeUrls)).filter((manga) => {
-    const nameLatestChapter = NameLatestChapterMap.find((n) => n.name === manga.title && n.source === manga.source);
-    if (!nameLatestChapter) {
-      return false;
-    }
-    const latestChapter = nameLatestChapter.latestChapter;
-    if (latestChapter === manga.latestChapter) {
-      return false;
-    }
-    console.log("OLD CHAPTER: " + latestChapter);
-    console.log("NEW CHAPTER: " + manga.latestChapter);
-    return "true";
-  });
-
-  // console.log(asuraResults);
-
-  //const mangas = asuraResults.filter((manga) => mangasToWatch.includes(manga.title));
-
-  const channel = client.channels.cache.get("1124111916516778075");
-  if (!channel) {
-    console.error("Channel not found");
-    return;
-  }
-
-  if (!channel.isTextBased()) {
-    console.error("Channel is not a text channel");
-    return;
-  }
-
-  mangaSeeResults.forEach((manga) => {
-    channel.send(`New chapter of ${manga.title} is out! ${manga.chapterUrl}`);
-  });
-
-  asuraResults.forEach((manga) => {
-    channel.send(`New chapter of ${manga.title} is out! ${manga.chapterUrl}`);
-  });
-
-  //Update latest chapter
-  mangaSeeResults.forEach(async (manga) => {
-    const existingSeries = await prisma.series.findUnique({
-      where: {
-        title_source_guildId: {
-          title: manga.title,
-          source: manga.source,
-          guildId: guildid.id,
+    //Find all URLs that have MangaSee as the source
+    const mangaSeeUrls = await prisma.series
+      .findMany({
+        where: {
+          source: "mangasee123.com",
         },
-      },
+      })
+      .then((series) => series.map((s) => s.url));
+
+    //Find series names and latest chapters
+    const NameLatestChapterMap = await prisma.series
+      .findMany()
+      .then((series) => series.map((s) => ({ name: s.title, latestChapter: s.latestChapter, source: s.source })));
+
+    console.log(NameLatestChapterMap);
+
+    const asuraResults = (await asurascans.scrape(browser)).filter((manga) => {
+      const nameLatestChapter = NameLatestChapterMap.find((n) => n.name === manga.title && n.source === manga.source);
+      if (!nameLatestChapter) {
+        return false;
+      }
+      const latestChapter = nameLatestChapter.latestChapter;
+      if (latestChapter === manga.latestChapter) {
+        return false;
+      }
+      console.log("OLD CHAPTER: " + latestChapter);
+      console.log("NEW CHAPTER: " + manga.latestChapter);
+      return "true";
     });
-    if (existingSeries) {
-      await prisma.series.update({
+
+    //Check if manga has a new chapter
+    const mangaSeeResults = (await mangasee.scrape(browser, mangaSeeUrls)).filter((manga) => {
+      const nameLatestChapter = NameLatestChapterMap.find((n) => n.name === manga.title && n.source === manga.source);
+      if (!nameLatestChapter) {
+        return false;
+      }
+      const latestChapter = nameLatestChapter.latestChapter;
+      if (latestChapter === manga.latestChapter) {
+        return false;
+      }
+      console.log("OLD CHAPTER: " + latestChapter);
+      console.log("NEW CHAPTER: " + manga.latestChapter);
+      return "true";
+    });
+
+    // console.log(asuraResults);
+
+    //const mangas = asuraResults.filter((manga) => mangasToWatch.includes(manga.title));
+
+    const channel = client.channels.cache.get("1124111916516778075");
+    if (!channel) {
+      console.error("Channel not found");
+      return;
+    }
+
+    if (!channel.isTextBased()) {
+      console.error("Channel is not a text channel");
+      return;
+    }
+
+    mangaSeeResults.forEach((manga) => {
+      channel.send(`New chapter of ${manga.title} is out! ${manga.chapterUrl}`);
+    });
+
+    asuraResults.forEach((manga) => {
+      channel.send(`New chapter of ${manga.title} is out! ${manga.chapterUrl}`);
+    });
+
+    //Update latest chapter
+    mangaSeeResults.forEach(async (manga) => {
+      const existingSeries = await prisma.series.findUnique({
         where: {
           title_source_guildId: {
             title: manga.title,
             source: manga.source,
-            guildId: guildid.id,
+            guildId: "1124111916076371978",
           },
         },
-        data: {
-          latestChapter: manga.latestChapter,
-          lastSrapedAt: new Date(),
-        },
       });
-    } else {
-      console.error(`Series not found: ${manga.title} (${manga.source})`);
-    }
-  });
-
-  asuraResults.forEach(async (manga) => {
-    const existingSeries = await prisma.series.findUnique({
-      where: {
-        title_source_guildId: {
-          title: manga.title,
-          source: manga.source,
-          guildId: guildid.id,
-        },
-      },
+      if (existingSeries) {
+        await prisma.series.update({
+          where: {
+            title_source_guildId: {
+              title: manga.title,
+              source: manga.source,
+              guildId: "1124111916076371978",
+            },
+          },
+          data: {
+            latestChapter: manga.latestChapter,
+            lastSrapedAt: new Date(),
+          },
+        });
+      } else {
+        console.error(`Series not found: ${manga.title} (${manga.source})`);
+      }
     });
-    if (existingSeries) {
-      await prisma.series.update({
+
+    asuraResults.forEach(async (manga) => {
+      const existingSeries = await prisma.series.findUnique({
         where: {
           title_source_guildId: {
             title: manga.title,
             source: manga.source,
-            guildId: guildid.id,
+            guildId: "1124111916076371978",
           },
         },
-        data: {
-          latestChapter: manga.latestChapter,
-          lastSrapedAt: new Date(),
-        },
       });
-    } else {
-      console.error(`Series not found: ${manga.title} (${manga.source})`);
-    }
-  });
-
-  console.log("Finished job at time: ", new Date().toLocaleString());
-};
+      if (existingSeries) {
+        await prisma.series.update({
+          where: {
+            title_source_guildId: {
+              title: manga.title,
+              source: manga.source,
+              guildId: "1124111916076371978",
+            },
+          },
+          data: {
+            latestChapter: manga.latestChapter,
+            lastSrapedAt: new Date(),
+          },
+        });
+      } else {
+        console.error(`Series not found: ${manga.title} (${manga.source})`);
+      }
+    });
+    console.log("Finished job at time: ", new Date().toLocaleString());
+});
