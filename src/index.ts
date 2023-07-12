@@ -224,7 +224,7 @@ const job = schedule.scheduleJob("* */6 * * *", async function () {
 
     //const mangas = asuraResults.filter((manga) => mangasToWatch.includes(manga.title));
 
-    const channel = client.channels.cache.get("1124111916516778075");
+    const channel = client.channels.cache.get("580811142478168084");
     if (!channel) {
       console.error("Channel not found");
       return;
@@ -250,7 +250,7 @@ const job = schedule.scheduleJob("* */6 * * *", async function () {
           title_source_guildId: {
             title: manga.title,
             source: manga.source,
-            guildId: "1124111916076371978",
+            guildId: "580514731849285632",
           },
         },
       });
@@ -260,7 +260,7 @@ const job = schedule.scheduleJob("* */6 * * *", async function () {
             title_source_guildId: {
               title: manga.title,
               source: manga.source,
-              guildId: "1124111916076371978",
+              guildId: "580514731849285632",
             },
           },
           data: {
@@ -279,7 +279,7 @@ const job = schedule.scheduleJob("* */6 * * *", async function () {
           title_source_guildId: {
             title: manga.title,
             source: manga.source,
-            guildId: "1124111916076371978",
+            guildId: "580514731849285632",
           },
         },
       });
@@ -289,7 +289,7 @@ const job = schedule.scheduleJob("* */6 * * *", async function () {
             title_source_guildId: {
               title: manga.title,
               source: manga.source,
-              guildId: "1124111916076371978",
+              guildId: "580514731849285632",
             },
           },
           data: {
