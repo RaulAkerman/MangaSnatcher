@@ -15,7 +15,7 @@ dotenv.config();
 pupeteer.use(StealthPlugin());
 
 (async () => {
-  const browser = await pupeteer.launch({ headless: true, dumpio: true });
+  const browser = await pupeteer.launch({ headless: true});
   client.once(Events.ClientReady, async (c) => {
     console.log(`Logged in as ${c.user.tag}`);
     c.guilds.cache.forEach(async (guild) => {
@@ -171,7 +171,7 @@ pupeteer.use(StealthPlugin());
 
 const job = schedule.scheduleJob("* */6 * * *", async function () {
     console.log("Running job at time: ", new Date().toLocaleString());
-    const browser = await pupeteer.launch({ headless: true, dumpio: true });
+    const browser = await pupeteer.launch({ headless: true});
     const asurascans = new AsuraScans();
     const mangasee = new MangaSee();
 
