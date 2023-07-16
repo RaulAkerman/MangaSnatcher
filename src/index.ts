@@ -187,7 +187,7 @@ pupeteer.use(StealthPlugin());
 // To run every 30 minutes change the first argument to "*/30 * * * *"
 // To run every minute change the first argument to "* * * * *"
 
-const job = schedule.scheduleJob("*/30 * * * *", async function () {
+const job = schedule.scheduleJob("* * * * *", async function () {
   console.log("Running job at time: ", new Date().toLocaleString());
   const browser = await pupeteer.launch({ headless: true });
   const asurascans = new AsuraScans();
@@ -241,10 +241,15 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
   // console.log(asuraResults);
 
   //const mangas = asuraResults.filter((manga) => mangasToWatch.includes(manga.title));
-  const channels = await prisma.series.findMany({
+  let channels = await prisma.series.findMany({
     select: {
       channelId: true,
     },
+  });
+
+  //Remove duplicate channels
+  channels = channels.filter((channel, index, self) => {
+    return index === self.findIndex((c) => c.channelId === channel.channelId);
   });
 
   channels.forEach(async (channel)  => {
@@ -261,6 +266,8 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
       },
     });
 
+
+    //Get the series names
     const mangaSeeSeriesNames = MangaSeeSeries.map((s) => s.title);
 
     //Find series with channel id and asura as source
