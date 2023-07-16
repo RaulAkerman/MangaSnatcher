@@ -30,6 +30,7 @@ model Series {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
   lastSrapedAt  DateTime? @map("last_sraped_at")
+  channelId     String    
 
   guild   Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
   guildId String @map("guild_id")

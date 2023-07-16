@@ -47,6 +47,17 @@ export default class MangaSee implements IScraper {
       });
   }
 
+  public async checkIfScrapeable(url: string, browser: Browser): Promise<boolean> {
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: "networkidle2" });
+    await page.waitForSelector("li.list-group-item.d-none.d-sm-block > h1");
+    const title = await page.evaluate(() => {
+      const title = document.querySelector("li.list-group-item.d-none.d-sm-block > h1")?.textContent;
+      return title;
+    });
+    return title !== null && title !== undefined;
+  }
+
   public async getTitleName(url: string, browser: Browser): Promise<string> {
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: "networkidle2" });

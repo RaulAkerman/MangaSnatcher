@@ -15,7 +15,7 @@ dotenv.config();
 pupeteer.use(StealthPlugin());
 
 (async () => {
-  const browser = await pupeteer.launch({ headless: true});
+  const browser = await pupeteer.launch({ headless: true });
   client.once(Events.ClientReady, async (c) => {
     console.log(`Logged in as ${c.user.tag}`);
     c.guilds.cache.forEach(async (guild) => {
@@ -74,7 +74,22 @@ pupeteer.use(StealthPlugin());
         return;
       }
 
-      message.channel.send(`Adding!`);
+      // Check if the series is scrapeable
+
+      message.channel.send(`Checking if ${url} is scrapeable...`);
+
+      try {
+        if (domainName === "asurascans.com") {
+          await asurascans.checkIfScrapeable(url, browser);
+        } else if (domainName === "mangasee123.com") {
+          await mangasee.checkIfScrapeable(url, browser);
+        }
+      } catch (e) {
+        await message.channel.send(
+          `${url} is not scrapeable...\n` + 'Make sure to link the URL at the "Home" page of the series.',
+        );
+        return;
+      }
 
       //Set seriesTitle depending on the domain name
       let seriesTitle = "";
@@ -105,6 +120,7 @@ pupeteer.use(StealthPlugin());
           source: domainName,
           guildId: message.guildId!,
           url: url,
+          channelId: message.channelId!,
         },
       });
       await message.channel.send(`Added ${seriesTitle} to the list of series to watch!`);
@@ -154,7 +170,9 @@ pupeteer.use(StealthPlugin());
           guildId: message.guildId!,
         },
       });
-      await message.channel.send(`Here are the series you are watching:\n${series.map((s) => s.title + " : " + s.url).join("\n")}`);
+      await message.channel.send(
+        `Here are the series you are watching:\n${series.map((s) => s.title + " : " + s.url).join("\n")}`,
+      );
     }
   });
 
@@ -169,88 +187,122 @@ pupeteer.use(StealthPlugin());
 // To run every 30 minutes change the first argument to "*/30 * * * *"
 // To run every minute change the first argument to "* * * * *"
 
-const job = schedule.scheduleJob("* */6 * * *", async function () {
-    console.log("Running job at time: ", new Date().toLocaleString());
-    const browser = await pupeteer.launch({ headless: true});
-    const asurascans = new AsuraScans();
-    const mangasee = new MangaSee();
+const job = schedule.scheduleJob("*/30 * * * *", async function () {
+  console.log("Running job at time: ", new Date().toLocaleString());
+  const browser = await pupeteer.launch({ headless: true });
+  const asurascans = new AsuraScans();
+  const mangasee = new MangaSee();
 
-    //Find all URLs that have MangaSee as the source
-    const mangaSeeUrls = await prisma.series
-      .findMany({
-        where: {
-          source: "mangasee123.com",
-        },
-      })
-      .then((series) => series.map((s) => s.url));
+  //Find all URLs that have MangaSee as the source
+  const mangaSeeUrls = await prisma.series
+    .findMany({
+      where: {
+        source: "mangasee123.com",
+      },
+    })
+    .then((series) => series.map((s) => s.url));
 
-    //Find series names and latest chapters
-    const NameLatestChapterMap = await prisma.series
-      .findMany()
-      .then((series) => series.map((s) => ({ name: s.title, latestChapter: s.latestChapter, source: s.source })));
+  //Find series names and latest chapters
+  const NameLatestChapterMap = await prisma.series
+    .findMany()
+    .then((series) => series.map((s) => ({ name: s.title, latestChapter: s.latestChapter, source: s.source })));
 
-    console.log(NameLatestChapterMap);
+  console.log(NameLatestChapterMap);
 
-    const asuraResults = (await asurascans.scrape(browser)).filter((manga) => {
-      const nameLatestChapter = NameLatestChapterMap.find((n) => n.name === manga.title && n.source === manga.source);
-      if (!nameLatestChapter) {
-        return false;
-      }
-      const latestChapter = nameLatestChapter.latestChapter;
-      if (latestChapter === manga.latestChapter) {
-        return false;
-      }
-      console.log("OLD CHAPTER: " + latestChapter);
-      console.log("NEW CHAPTER: " + manga.latestChapter);
-      return "true";
-    });
-
-    //Check if manga has a new chapter
-    const mangaSeeResults = (await mangasee.scrape(browser, mangaSeeUrls)).filter((manga) => {
-      const nameLatestChapter = NameLatestChapterMap.find((n) => n.name === manga.title && n.source === manga.source);
-      if (!nameLatestChapter) {
-        return false;
-      }
-      const latestChapter = nameLatestChapter.latestChapter;
-      if (latestChapter === manga.latestChapter) {
-        return false;
-      }
-      console.log("OLD CHAPTER: " + latestChapter);
-      console.log("NEW CHAPTER: " + manga.latestChapter);
-      return "true";
-    });
-
-    // console.log(asuraResults);
-
-    //const mangas = asuraResults.filter((manga) => mangasToWatch.includes(manga.title));
-
-    const channel = client.channels.cache.get("580811142478168084");
-    if (!channel) {
-      console.error("Channel not found");
-      return;
+  const asuraResults = (await asurascans.scrape(browser)).filter((manga) => {
+    const nameLatestChapter = NameLatestChapterMap.find((n) => n.name === manga.title && n.source === manga.source);
+    if (!nameLatestChapter) {
+      return false;
     }
+    const latestChapter = nameLatestChapter.latestChapter;
+    if (latestChapter === manga.latestChapter) {
+      return false;
+    }
+    console.log("OLD CHAPTER: " + latestChapter);
+    console.log("NEW CHAPTER: " + manga.latestChapter);
+    return "true";
+  });
 
-    if (!channel.isTextBased()) {
+  //Check if manga has a new chapter
+  const mangaSeeResults = (await mangasee.scrape(browser, mangaSeeUrls)).filter((manga) => {
+    const nameLatestChapter = NameLatestChapterMap.find((n) => n.name === manga.title && n.source === manga.source);
+    if (!nameLatestChapter) {
+      return false;
+    }
+    const latestChapter = nameLatestChapter.latestChapter;
+    if (latestChapter === manga.latestChapter) {
+      return false;
+    }
+    console.log("OLD CHAPTER: " + latestChapter);
+    console.log("NEW CHAPTER: " + manga.latestChapter);
+    return "true";
+  });
+
+  // console.log(asuraResults);
+
+  //const mangas = asuraResults.filter((manga) => mangasToWatch.includes(manga.title));
+  const channels = await prisma.series.findMany({
+    select: {
+      channelId: true,
+    },
+  });
+
+  channels.forEach(async (channel)  => {
+    const channelInstance = client.channels.cache.get(channel.channelId);
+
+    //Find series with channel id and mangasee as source
+    const MangaSeeSeries = await prisma.series.findMany({
+      where: {
+        channelId: channel.channelId,
+        source: "mangasee123.com",
+      },
+      select: {
+        title: true,
+      },
+    });
+
+    const mangaSeeSeriesNames = MangaSeeSeries.map((s) => s.title);
+
+    //Find series with channel id and asura as source
+    const AsuraSeries = await prisma.series.findMany({
+      where: {
+        channelId: channel.channelId,
+        source: "asurascans.com",
+      },
+      select: {
+        title: true,
+      },
+    });
+
+    const asuraSeriesNames = AsuraSeries.map((s) => s.title);
+
+    if (!channelInstance || !channelInstance.isTextBased()) {
       console.error("Channel is not a text channel");
       return;
     }
-
     mangaSeeResults.forEach((manga) => {
-      channel.send(`New chapter of ${manga.title} is out! ${manga.chapterUrl}`);
+      if (mangaSeeSeriesNames.includes(manga.title)) {
+      channelInstance.send(`New chapter of ${manga.title} is out! <${manga.chapterUrl}>`);
+      }
     });
 
     asuraResults.forEach((manga) => {
-      channel.send(`New chapter of ${manga.title} is out! ${manga.chapterUrl}`);
+      if (asuraSeriesNames.includes(manga.title)) {
+      channelInstance.send(`New chapter of ${manga.title} is out! <${manga.chapterUrl}>`);
+      }
     });
+  });
 
-    //Update latest chapter
+  //Update latest chapter
+  const guilds = await prisma.guild.findMany();
+  guilds.forEach(async (guild) => {
     mangaSeeResults.forEach(async (manga) => {
       const existingSeries = await prisma.series.findUnique({
         where: {
           title_source_guildId: {
             title: manga.title,
             source: manga.source,
-            guildId: "580514731849285632",
+            guildId: guild.id,
           },
         },
       });
@@ -260,7 +312,7 @@ const job = schedule.scheduleJob("* */6 * * *", async function () {
             title_source_guildId: {
               title: manga.title,
               source: manga.source,
-              guildId: "580514731849285632",
+              guildId: guild.id,
             },
           },
           data: {
@@ -269,17 +321,18 @@ const job = schedule.scheduleJob("* */6 * * *", async function () {
           },
         });
       } else {
-        console.error(`Series not found: ${manga.title} (${manga.source})`);
+        console.error(`Series not found: ${manga.title} (${manga.source}) OR series up-to-date`);
       }
     });
-
+  });
+  guilds.forEach(async (guild) => {
     asuraResults.forEach(async (manga) => {
       const existingSeries = await prisma.series.findUnique({
         where: {
           title_source_guildId: {
             title: manga.title,
             source: manga.source,
-            guildId: "580514731849285632",
+            guildId: guild.id,
           },
         },
       });
@@ -289,7 +342,7 @@ const job = schedule.scheduleJob("* */6 * * *", async function () {
             title_source_guildId: {
               title: manga.title,
               source: manga.source,
-              guildId: "580514731849285632",
+              guildId: guild.id,
             },
           },
           data: {
@@ -298,8 +351,9 @@ const job = schedule.scheduleJob("* */6 * * *", async function () {
           },
         });
       } else {
-        console.error(`Series not found: ${manga.title} (${manga.source})`);
+        console.error(`Series not found: ${manga.title} (${manga.source}) OR series up-to-date`);
       }
     });
-    console.log("Finished job at time: ", new Date().toLocaleString());
+  });
+  console.log("Finished job at time: ", new Date().toLocaleString());
 });

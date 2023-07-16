@@ -38,6 +38,17 @@ export default class AsuraScans implements IScraper {
     });
   }
 
+  public async checkIfScrapeable(url: string, browser: Browser): Promise<boolean> {
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: "networkidle2" });
+    await page.waitForSelector("h1.entry-title");
+    const title = await page.evaluate(() => {
+      const title = document.querySelector("h1.entry-title")?.textContent;
+      return title;
+    });
+    return title !== null && title !== undefined;
+  }
+
   public async getTitleName(url: string, browser: Browser): Promise<string> {
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: "networkidle2" });
