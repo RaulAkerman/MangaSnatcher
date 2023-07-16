@@ -187,7 +187,7 @@ pupeteer.use(StealthPlugin());
 // To run every 30 minutes change the first argument to "*/30 * * * *"
 // To run every minute change the first argument to "* * * * *"
 
-const job = schedule.scheduleJob("* * * * *", async function () {
+const job = schedule.scheduleJob("*/30 * * * *", async function () {
   console.log("Running job at time: ", new Date().toLocaleString());
   const browser = await pupeteer.launch({ headless: true });
   const asurascans = new AsuraScans();
