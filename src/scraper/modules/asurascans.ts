@@ -2,11 +2,11 @@ import type { Browser } from "puppeteer";
 import { ScraperResult, IScraper, ScraperSource } from "../base";
 
 export default class AsuraScans implements IScraper {
-  private siteUrl = "https://www.asurascans.com";
+  private siteUrl = "https://www.asura.gg";
   public async scrape(browser: Browser): Promise<ScraperResult[]> {
     const page = await browser.newPage();
     //page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
-    await page.goto("https://www.asurascans.com", { waitUntil: "networkidle2" });
+    await page.goto("https://www.asura.gg", { waitUntil: "networkidle2" });
     await page.waitForSelector(".series");
     await page.screenshot({ path: "asura.png", fullPage: true });
     const series = await page.evaluate(() => {

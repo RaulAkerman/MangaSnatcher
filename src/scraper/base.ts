@@ -4,7 +4,7 @@ import AsuraScans from "./modules/asurascans"
 
 export enum ScraperSource {
   MangaDex = "MangaDex",
-  AsuraScans = "asurascans.com",
+  AsuraScans = "asura.gg",
   MangaSee = "mangasee123.com",
 }
 

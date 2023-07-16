@@ -35,7 +35,7 @@ pupeteer.use(StealthPlugin());
     });
   });
 
-  const AcceptedDomains = ["asurascans.com", "mangadex.org", "mangasee123.com"];
+  const AcceptedDomains = ["asura.gg", "mangadex.org", "mangasee123.com"];
 
   function extractDomainName(url: string): string | null {
     const regex = /^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n?]+)/gim;
@@ -79,7 +79,7 @@ pupeteer.use(StealthPlugin());
       message.channel.send(`Checking if ${url} is scrapeable...`);
 
       try {
-        if (domainName === "asurascans.com") {
+        if (domainName === "asura.gg") {
           await asurascans.checkIfScrapeable(url, browser);
         } else if (domainName === "mangasee123.com") {
           await mangasee.checkIfScrapeable(url, browser);
@@ -93,7 +93,7 @@ pupeteer.use(StealthPlugin());
 
       //Set seriesTitle depending on the domain name
       let seriesTitle = "";
-      if (domainName === "asurascans.com") {
+      if (domainName === "asura.gg") {
         seriesTitle = await asurascans.getTitleName(url, browser);
       } else if (domainName === "mangasee123.com") {
         seriesTitle = await mangasee.getTitleName(url, browser);
@@ -141,7 +141,7 @@ pupeteer.use(StealthPlugin());
       //Set seriesTitle depending on the domain name
 
       let seriesTitle = "";
-      if (domainName === "asurascans.com") {
+      if (domainName === "asura.gg") {
         seriesTitle = await asurascans.getTitleName(url, browser);
       } else if (domainName === "mangasee123.com") {
         seriesTitle = await mangasee.getTitleName(url, browser);
@@ -274,7 +274,7 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
     const AsuraSeries = await prisma.series.findMany({
       where: {
         channelId: channel.channelId,
-        source: "asurascans.com",
+        source: "asura.gg",
       },
       select: {
         title: true,
