@@ -65,6 +65,7 @@ pupeteer.use(StealthPlugin());
     if (message.content.startsWith("!add")) {
       const url = message.content.slice("!add".length).trim();
       const domainName = extractDomainName(url);
+
       if (!domainName) {
         await message.channel.send(`Sorry, ${url} is not a valid URL.`);
         return;
@@ -72,6 +73,33 @@ pupeteer.use(StealthPlugin());
       if (!AcceptedDomains.includes(domainName)) {
         await message.channel.send(`Sorry, ${domainName} is not an supported domain.`);
         return;
+      }
+
+      // Check if the series is already being watched
+      if (domainName === "asura.gg") {
+        const existingSeries = await prisma.series.findFirst({
+          where: {
+            title: await asurascans.getTitleName(url, browser),
+            url: url,
+            guildId: message.guildId!,
+          },
+        });
+        if (existingSeries) {
+          await message.channel.send(`<${url}> is already being watched!`);
+          return;
+        }
+      } else if (domainName === "mangasee123.com") {
+        const existingSeries = await prisma.series.findFirst({
+          where: {
+            url: url,
+            title: await mangasee.getTitleName(url, browser),
+            guildId: message.guildId!,
+          },
+        });
+        if (existingSeries) {
+          await message.channel.send(`<${url}> is already being watched!`);
+          return;
+        }
       }
 
       // Check if the series is scrapeable
@@ -252,7 +280,7 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
     return index === self.findIndex((c) => c.channelId === channel.channelId);
   });
 
-  channels.forEach(async (channel)  => {
+  channels.forEach(async (channel) => {
     const channelInstance = client.channels.cache.get(channel.channelId);
 
     //Find series with channel id and mangasee as source
@@ -265,7 +293,6 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
         title: true,
       },
     });
-
 
     //Get the series names
     const mangaSeeSeriesNames = MangaSeeSeries.map((s) => s.title);
@@ -289,13 +316,13 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
     }
     mangaSeeResults.forEach((manga) => {
       if (mangaSeeSeriesNames.includes(manga.title)) {
-      channelInstance.send(`New chapter of ${manga.title} is out! <${manga.chapterUrl}>`);
+        channelInstance.send(`New chapter of ${manga.title} is out! <${manga.chapterUrl}>`);
       }
     });
 
     asuraResults.forEach((manga) => {
       if (asuraSeriesNames.includes(manga.title)) {
-      channelInstance.send(`New chapter of ${manga.title} is out! <${manga.chapterUrl}>`);
+        channelInstance.send(`New chapter of ${manga.title} is out! <${manga.chapterUrl}>`);
       }
     });
   });
