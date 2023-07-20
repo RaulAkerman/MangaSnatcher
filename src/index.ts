@@ -104,7 +104,12 @@ pupeteer.use(StealthPlugin());
 
       // Check if the series is scrapeable
 
-      message.channel.send(`Checking if ${url} is scrapeable...`);
+      //Send a message to the channel saying that the bot is checking if the series is scrapeable, delete the message after 10 seconds
+      const checkingMessage = await message.channel.send(`Checking if ${url} is scrapeable...`);
+
+      setTimeout(async () => {
+        await checkingMessage.delete();
+      }, 10000);
 
       try {
         if (domainName === "asura.gg") {
@@ -151,7 +156,7 @@ pupeteer.use(StealthPlugin());
           channelId: message.channelId!,
         },
       });
-      await message.channel.send(`Added ${seriesTitle} to the list of series to watch!`);
+      await message.channel.send(`Added ${seriesTitle} to the watchlist!`);
     }
 
     if (message.content.startsWith("!remove")) {
@@ -246,8 +251,11 @@ const job = schedule.scheduleJob("*/15 * * * *", async function () {
     if (latestChapter === manga.latestChapter) {
       return false;
     }
-    if (manga.latestChapter !== nameLatestChapter.latestChapter && nameLatestChapter.latestChapter === undefined || nameLatestChapter.latestChapter === null) {
-      console.log("FIRST SCRAPE")
+    if (
+      (manga.latestChapter !== nameLatestChapter.latestChapter && nameLatestChapter.latestChapter === undefined) ||
+      nameLatestChapter.latestChapter === null
+    ) {
+      console.log("FIRST SCRAPE");
       return true;
     }
     console.log("OLD CHAPTER: " + latestChapter);
@@ -265,8 +273,11 @@ const job = schedule.scheduleJob("*/15 * * * *", async function () {
     if (latestChapter === manga.latestChapter) {
       return false;
     }
-    if (manga.latestChapter !== nameLatestChapter.latestChapter && nameLatestChapter.latestChapter === undefined || nameLatestChapter.latestChapter === null) {
-      console.log("FIRST SCRAPE")
+    if (
+      (manga.latestChapter !== nameLatestChapter.latestChapter && nameLatestChapter.latestChapter === undefined) ||
+      nameLatestChapter.latestChapter === null
+    ) {
+      console.log("FIRST SCRAPE");
       return true;
     }
     console.log("OLD CHAPTER: " + latestChapter);
@@ -327,7 +338,10 @@ const job = schedule.scheduleJob("*/15 * * * *", async function () {
     mangaSeeResults.forEach((manga) => {
       if (mangaSeeSeriesNames.includes(manga.title)) {
         //If the last chapter was undefined dont send message
-        if (MangaSeeSeries.find((s) => s.title === manga.title)?.latestChapter === undefined || MangaSeeSeries.find((s) => s.title === manga.title)?.latestChapter === null) {
+        if (
+          MangaSeeSeries.find((s) => s.title === manga.title)?.latestChapter === undefined ||
+          MangaSeeSeries.find((s) => s.title === manga.title)?.latestChapter === null
+        ) {
           return;
         }
         channelInstance.send(`New chapter of ${manga.title} is out! <${manga.chapterUrl}>`);
@@ -337,7 +351,10 @@ const job = schedule.scheduleJob("*/15 * * * *", async function () {
     asuraResults.forEach((manga) => {
       if (asuraSeriesNames.includes(manga.title)) {
         //If the last chapter was undefined dont send message
-        if (AsuraSeries.find((s) => s.title === manga.title)?.latestChapter === undefined || AsuraSeries.find((s) => s.title === manga.title)?.latestChapter === null) {
+        if (
+          AsuraSeries.find((s) => s.title === manga.title)?.latestChapter === undefined ||
+          AsuraSeries.find((s) => s.title === manga.title)?.latestChapter === null
+        ) {
           return;
         }
         channelInstance.send(`New chapter of ${manga.title} is out! <${manga.chapterUrl}>`);
