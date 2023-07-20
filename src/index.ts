@@ -215,7 +215,7 @@ pupeteer.use(StealthPlugin());
 // To run every 30 minutes change the first argument to "*/30 * * * *"
 // To run every minute change the first argument to "* * * * *"
 
-const job = schedule.scheduleJob("*/30 * * * *", async function () {
+const job = schedule.scheduleJob("*/15 * * * *", async function () {
   console.log("Running job at time: ", new Date().toLocaleString());
   const browser = await pupeteer.launch({ headless: true });
   const asurascans = new AsuraScans();
@@ -246,9 +246,13 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
     if (latestChapter === manga.latestChapter) {
       return false;
     }
+    if (manga.latestChapter !== nameLatestChapter.latestChapter && nameLatestChapter.latestChapter === undefined || nameLatestChapter.latestChapter === null) {
+      console.log("FIRST SCRAPE")
+      return true;
+    }
     console.log("OLD CHAPTER: " + latestChapter);
     console.log("NEW CHAPTER: " + manga.latestChapter);
-    return "true";
+    return true;
   });
 
   //Check if manga has a new chapter
@@ -261,9 +265,13 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
     if (latestChapter === manga.latestChapter) {
       return false;
     }
+    if (manga.latestChapter !== nameLatestChapter.latestChapter && nameLatestChapter.latestChapter === undefined || nameLatestChapter.latestChapter === null) {
+      console.log("FIRST SCRAPE")
+      return true;
+    }
     console.log("OLD CHAPTER: " + latestChapter);
     console.log("NEW CHAPTER: " + manga.latestChapter);
-    return "true";
+    return true;
   });
 
   // console.log(asuraResults);
@@ -291,6 +299,7 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
       },
       select: {
         title: true,
+        latestChapter: true,
       },
     });
 
@@ -305,6 +314,7 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
       },
       select: {
         title: true,
+        latestChapter: true,
       },
     });
 
@@ -316,12 +326,20 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
     }
     mangaSeeResults.forEach((manga) => {
       if (mangaSeeSeriesNames.includes(manga.title)) {
+        //If the last chapter was undefined dont send message
+        if (MangaSeeSeries.find((s) => s.title === manga.title)?.latestChapter === undefined || MangaSeeSeries.find((s) => s.title === manga.title)?.latestChapter === null) {
+          return;
+        }
         channelInstance.send(`New chapter of ${manga.title} is out! <${manga.chapterUrl}>`);
       }
     });
 
     asuraResults.forEach((manga) => {
       if (asuraSeriesNames.includes(manga.title)) {
+        //If the last chapter was undefined dont send message
+        if (AsuraSeries.find((s) => s.title === manga.title)?.latestChapter === undefined || AsuraSeries.find((s) => s.title === manga.title)?.latestChapter === null) {
+          return;
+        }
         channelInstance.send(`New chapter of ${manga.title} is out! <${manga.chapterUrl}>`);
       }
     });
