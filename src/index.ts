@@ -300,9 +300,8 @@ const job = schedule.scheduleJob("*/10 * * * *", async function () {
       },
     });
 
-    //Get the series names
+    //Get the series names 
     const mangaSeeSeriesNames = MangaSeeSeries.map((s) => s.title);
-
     //Find series with channel id and asura as source
     const AsuraSeries = await prisma.series.findMany({
       where: {
@@ -331,7 +330,6 @@ const job = schedule.scheduleJob("*/10 * * * *", async function () {
           MangaSeeSeries.find((s) => s.title === manga.title)?.latestChapter === undefined ||
           MangaSeeSeries.find((s) => s.title === manga.title)?.latestChapter === null
         ) {
-          channelInstance.send(`FIRST SCRAPE`);
           return;
         } else {
           channelInstance.send(`New chapter of ${manga.title} is out! <${manga.chapterUrl}>`);
