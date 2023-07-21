@@ -365,7 +365,7 @@ const job = schedule.scheduleJob("*/15 * * * *", async function () {
 
     resultsToAnnounce.forEach((manga) => {
       if (asuraSeriesNames.includes(manga.title) || mangaSeeSeriesNames.includes(manga.title)) {
-        channelInstance.send(`New chapter of ${manga.title} is out! <${manga.seriesUrl}>`);
+        channelInstance.send(`New chapter of ${manga.title} is out! <${manga.chapterUrl}>`);
       }
     });
   });
