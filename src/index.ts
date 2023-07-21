@@ -254,11 +254,11 @@ const job = schedule.scheduleJob("*/15 * * * *", async function () {
       return false;
     }
     if (nameLatestChapter.latestChapter === null || nameLatestChapter.latestChapter === undefined) {
-      resultsToAnnounce.push(manga);
       return true;
     }
     console.log("OLD CHAPTER: " + latestChapter);
     console.log("NEW CHAPTER: " + manga.latestChapter);
+    resultsToAnnounce.push(manga);
     return true;
   });
 
@@ -365,7 +365,7 @@ const job = schedule.scheduleJob("*/15 * * * *", async function () {
 
     resultsToAnnounce.forEach((manga) => {
       if (asuraSeriesNames.includes(manga.title) || mangaSeeSeriesNames.includes(manga.title)) {
-        channelInstance.send(`New series ${manga.title} is out! <${manga.seriesUrl}>`);
+        channelInstance.send(`New chapter of ${manga.title} is out! <${manga.seriesUrl}>`);
       }
     });
   });
