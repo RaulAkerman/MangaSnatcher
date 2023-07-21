@@ -220,7 +220,7 @@ pupeteer.use(StealthPlugin());
 // To run every 30 minutes change the first argument to "*/30 * * * *"
 // To run every minute change the first argument to "* * * * *"
 
-const job = schedule.scheduleJob("*/15 * * * *", async function () {
+const job = schedule.scheduleJob("* * * * *", async function () {
   console.log("Running job at time: ", new Date().toLocaleString());
   const browser = await pupeteer.launch({ headless: true });
   const asurascans = new AsuraScans();
@@ -251,13 +251,6 @@ const job = schedule.scheduleJob("*/15 * * * *", async function () {
     if (latestChapter === manga.latestChapter) {
       return false;
     }
-    if (
-      (manga.latestChapter !== nameLatestChapter.latestChapter && nameLatestChapter.latestChapter === undefined) ||
-      nameLatestChapter.latestChapter === null
-    ) {
-      console.log("FIRST SCRAPE");
-      return true;
-    }
     console.log("OLD CHAPTER: " + latestChapter);
     console.log("NEW CHAPTER: " + manga.latestChapter);
     return true;
@@ -272,13 +265,6 @@ const job = schedule.scheduleJob("*/15 * * * *", async function () {
     const latestChapter = nameLatestChapter.latestChapter;
     if (latestChapter === manga.latestChapter) {
       return false;
-    }
-    if (
-      (manga.latestChapter !== nameLatestChapter.latestChapter && nameLatestChapter.latestChapter === undefined) ||
-      nameLatestChapter.latestChapter === null
-    ) {
-      console.log("FIRST SCRAPE");
-      return true;
     }
     console.log("OLD CHAPTER: " + latestChapter);
     console.log("NEW CHAPTER: " + manga.latestChapter);
@@ -342,9 +328,11 @@ const job = schedule.scheduleJob("*/15 * * * *", async function () {
           MangaSeeSeries.find((s) => s.title === manga.title)?.latestChapter === undefined ||
           MangaSeeSeries.find((s) => s.title === manga.title)?.latestChapter === null
         ) {
+          channelInstance.send(`FIRST SCRAPE`);
           return;
+        } else {
+          channelInstance.send(`New chapter of ${manga.title} is out! <${manga.chapterUrl}>`);
         }
-        channelInstance.send(`New chapter of ${manga.title} is out! <${manga.chapterUrl}>`);
       }
     });
 
@@ -356,8 +344,9 @@ const job = schedule.scheduleJob("*/15 * * * *", async function () {
           AsuraSeries.find((s) => s.title === manga.title)?.latestChapter === null
         ) {
           return;
+        } else {
+          channelInstance.send(`New chapter of ${manga.title} is out! <${manga.chapterUrl}>`);
         }
-        channelInstance.send(`New chapter of ${manga.title} is out! <${manga.chapterUrl}>`);
       }
     });
   });
