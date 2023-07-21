@@ -324,6 +324,9 @@ const job = schedule.scheduleJob("*/10 * * * *", async function () {
     mangaSeeResults.forEach((manga) => {
       if (mangaSeeSeriesNames.includes(manga.title)) {
         //If the last chapter was undefined dont send message
+        console.log("Current Chapter: ");
+        console.log(MangaSeeSeries.find((s) => s.title === manga.title)?.latestChapter);
+
         if (
           MangaSeeSeries.find((s) => s.title === manga.title)?.latestChapter === undefined ||
           MangaSeeSeries.find((s) => s.title === manga.title)?.latestChapter === null
