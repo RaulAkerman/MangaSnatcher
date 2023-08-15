@@ -57,6 +57,10 @@ export default class MangaSee implements IScraper {
     await page.waitForSelector("li.list-group-item.d-none.d-sm-block > h1");
     const title = await page.evaluate(() => {
       const title = document.querySelector("li.list-group-item.d-none.d-sm-block > h1")?.textContent;
+
+      //Close the page we opened here
+      page.close();
+
       return title;
     });
 
@@ -82,7 +86,7 @@ export default class MangaSee implements IScraper {
 
     //Close the page we opened here
     await page.close();
-    
+
     return title!;
   }
 }
