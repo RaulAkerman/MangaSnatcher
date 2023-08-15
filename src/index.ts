@@ -282,6 +282,9 @@ const job = schedule.scheduleJob("*/15 * * * *", async function () {
     return true;
   });
 
+  //Close browser
+  await browser.close();
+
   // console.log(asuraResults);
 
   //const mangas = asuraResults.filter((manga) => mangasToWatch.includes(manga.title));
