@@ -59,6 +59,10 @@ export default class MangaSee implements IScraper {
       const title = document.querySelector("li.list-group-item.d-none.d-sm-block > h1")?.textContent;
       return title;
     });
+
+    //Close the page we opened here
+    await page.close();
+
     return title !== null && title !== undefined;
   }
 
@@ -69,8 +73,16 @@ export default class MangaSee implements IScraper {
     await page.waitForSelector("li.list-group-item.d-none.d-sm-block > h1");
     const title = await page.evaluate(() => {
       const title = document.querySelector("li.list-group-item.d-none.d-sm-block > h1")?.textContent;
+
+      //Close the page we opened here
+      page.close();
+
       return title;
     });
+
+    //Close the page we opened here
+    await page.close();
+    
     return title!;
   }
 }

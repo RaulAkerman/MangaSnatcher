@@ -46,8 +46,14 @@ export default class AsuraScans implements IScraper {
     await page.waitForSelector("h1.entry-title");
     const title = await page.evaluate(() => {
       const title = document.querySelector("h1.entry-title")?.textContent;
+
+      page.close();
+
       return title;
     });
+
+    page.close();
+
     return title !== null && title !== undefined;
   }
 
@@ -57,8 +63,11 @@ export default class AsuraScans implements IScraper {
     await page.waitForSelector("h1.entry-title");
     const title = await page.evaluate(() => {
       const title = document.querySelector("h1.entry-title")?.textContent;
+      page.close();
       return title;
     });
+
+    page.close();
     return title!;
   }
 }
