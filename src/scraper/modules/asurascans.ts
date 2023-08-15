@@ -25,6 +25,8 @@ export default class AsuraScans implements IScraper {
         };
       });
     });
+    //Close the page we opened earlier
+    await page.close();
     return series.filter(
       (s) => s.title && s.seriesUrl && s.latestChapter && s.chapterUrl
     ).map((s) => {

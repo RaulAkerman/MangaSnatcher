@@ -34,6 +34,10 @@ export default class MangaSee implements IScraper {
       })) as any;
       series.push(data);
     }
+
+    //Close the page we opened here
+    await page.close();
+
     return series
       .filter((s) => s.title && s.latestChapter && s.chapterUrl)
       .map((s) => {
