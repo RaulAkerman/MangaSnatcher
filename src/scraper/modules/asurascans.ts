@@ -5,6 +5,7 @@ export default class AsuraScans implements IScraper {
   private siteUrl = "https://asura.gg/";
   public async scrape(browser: Browser): Promise<ScraperResult[]> {
     const page = await browser.newPage();
+    await page.setCacheEnabled(false);
     //page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
     await page.goto("https://asura.gg/", { waitUntil: "networkidle2" });
     await page.waitForSelector(".series");

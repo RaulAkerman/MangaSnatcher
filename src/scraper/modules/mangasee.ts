@@ -4,6 +4,7 @@ import { ScraperResult, IScraper, ScraperSource } from "../base";
 export default class MangaSee implements IScraper {
   public async scrape(browser: Browser, urls: string[]): Promise<ScraperResult[]> {
     const page = await browser.newPage();
+    await page.setCacheEnabled(false);
     console.log("Scraping MangaSee");
     let series: ScraperResult[] = [];
     let seriesUrllist: string[] = [];
