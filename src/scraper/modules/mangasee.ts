@@ -9,35 +9,43 @@ export default class MangaSee implements IScraper {
     let series: ScraperResult[] = [];
     let seriesUrllist: string[] = [];
     // Go to each url and scrape
-    for (const url of urls) {
-      seriesUrllist.push(url);
-      console.log(`Scraping ${url} for series \n`);
-      await page.goto(url, { waitUntil: "networkidle2" });
-      await page.screenshot({ path: "mangasee.png", fullPage: true });
-      await page.waitForSelector(".list-group.top-10.bottom-5.ng-scope");
-      await page.waitForSelector("li.list-group-item.d-none.d-sm-block > h1");
-      const data = (await page.evaluate(() => {
-        const siteUrl = "https://mangasee123.com";
-        const title = document.querySelector("li.list-group-item.d-none.d-sm-block > h1")?.textContent;
-        const chapterUrl = siteUrl + document.querySelector(".list-group-item.ChapterLink")?.getAttribute("href")?.replace(/-page-\d+\.html$/, ".html");
-        const regex = /chapter-(\d+)/;
-        const latestChapter = chapterUrl?.match(regex)?.[1];
-        if (!title || !latestChapter || !chapterUrl) {
-          console.error(`Error scraping`);
-          return [];
-        }
-        console.log(`Scraped ${title} ${latestChapter} ${chapterUrl}`);
-        return {
-          title,
-          latestChapter,
-          chapterUrl,
-        };
-      })) as any;
-      series.push(data);
+    try {
+      for (const url of urls) {
+        seriesUrllist.push(url);
+        console.log(`Scraping ${url} for series \n`);
+        await page.goto(url, { waitUntil: "networkidle2" });
+        await page.screenshot({ path: "mangasee.png", fullPage: true });
+        await page.waitForSelector(".list-group.top-10.bottom-5.ng-scope");
+        await page.waitForSelector("li.list-group-item.d-none.d-sm-block > h1");
+        const data = (await page.evaluate(() => {
+          const siteUrl = "https://mangasee123.com";
+          const title = document.querySelector("li.list-group-item.d-none.d-sm-block > h1")?.textContent;
+          const chapterUrl =
+            siteUrl +
+            document
+              .querySelector(".list-group-item.ChapterLink")
+              ?.getAttribute("href")
+              ?.replace(/-page-\d+\.html$/, ".html");
+          const regex = /chapter-(\d+)/;
+          const latestChapter = chapterUrl?.match(regex)?.[1];
+          if (!title || !latestChapter || !chapterUrl) {
+            console.error(`Error scraping`);
+            return [];
+          }
+          console.log(`Scraped ${title} ${latestChapter} ${chapterUrl}`);
+          return {
+            title,
+            latestChapter,
+            chapterUrl,
+          };
+        })) as any;
+        series.push(data);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      await page.close();
     }
-
-    //Close the page we opened here
-    await page.close();
 
     return series
       .filter((s) => s.title && s.latestChapter && s.chapterUrl)

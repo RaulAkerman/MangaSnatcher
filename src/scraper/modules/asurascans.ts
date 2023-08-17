@@ -6,39 +6,49 @@ export default class AsuraScans implements IScraper {
   public async scrape(browser: Browser): Promise<ScraperResult[]> {
     const page = await browser.newPage();
     await page.setCacheEnabled(false);
-    //page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
-    await page.goto("https://asura.gg/", { waitUntil: "networkidle2" });
-    await page.waitForSelector(".series");
-    await page.screenshot({ path: "asura.png", fullPage: true });
-    const series = await page.evaluate(() => {
-      const elements = document.getElementsByClassName("uta");
-      const pageElements = Array.from(elements);
-      return pageElements.map((pageElement) => {
-        const title = pageElement.querySelector("h4")?.textContent;
-        const seriesUrl = pageElement.querySelector("a")?.getAttribute("href");
-        const latestChapter = pageElement.querySelector("ul")?.querySelector("li")?.querySelector("a")?.textContent;
-        const chapterUrl = pageElement.querySelector("ul")?.querySelector("li")?.querySelector("a")?.getAttribute("href");
-        return {
-          title,
-          seriesUrl,
-          chapterUrl,
-          latestChapter,
-        };
+    try {
+      //page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
+      await page.goto("https://asura.gg/", { waitUntil: "networkidle2" });
+      await page.waitForSelector(".series");
+      await page.screenshot({ path: "asura.png", fullPage: true });
+      const series = await page.evaluate(() => {
+        const elements = document.getElementsByClassName("uta");
+        const pageElements = Array.from(elements);
+        return pageElements.map((pageElement) => {
+          const title = pageElement.querySelector("h4")?.textContent;
+          const seriesUrl = pageElement.querySelector("a")?.getAttribute("href");
+          const latestChapter = pageElement.querySelector("ul")?.querySelector("li")?.querySelector("a")?.textContent;
+          const chapterUrl = pageElement
+            .querySelector("ul")
+            ?.querySelector("li")
+            ?.querySelector("a")
+            ?.getAttribute("href");
+          return {
+            title,
+            seriesUrl,
+            chapterUrl,
+            latestChapter,
+          };
+        });
       });
-    });
-    //Close the page we opened earlier
-    await page.close();
-    return series.filter(
-      (s) => s.title && s.seriesUrl && s.latestChapter && s.chapterUrl
-    ).map((s) => {
-      return {
-        title: s.title!,
-        latestChapter: s.latestChapter!,
-        seriesUrl: s.seriesUrl!,
-        source: ScraperSource.AsuraScans,
-        chapterUrl: s.chapterUrl!,
-        };
-    });
+
+      return series
+        .filter((s) => s.title && s.seriesUrl && s.latestChapter && s.chapterUrl)
+        .map((s) => {
+          return {
+            title: s.title!,
+            latestChapter: s.latestChapter!,
+            seriesUrl: s.seriesUrl!,
+            source: ScraperSource.AsuraScans,
+            chapterUrl: s.chapterUrl!,
+          };
+        });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      await page.close();
+    }
+    return [];
   }
 
   public async checkIfScrapeable(url: string, browser: Browser): Promise<boolean> {
