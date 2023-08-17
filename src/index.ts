@@ -220,7 +220,7 @@ pupeteer.use(StealthPlugin());
 // To run every 30 minutes change the first argument to "*/30 * * * *"
 // To run every minute change the first argument to "* * * * *"
 
-const job = schedule.scheduleJob("*/5 * * * *", async function () {
+const job = schedule.scheduleJob("*/10 * * * *", async function () {
   console.log("Running job at time: ", new Date().toLocaleString());
   const args = [
     "--aggressive-cache-discard",
@@ -273,23 +273,23 @@ const job = schedule.scheduleJob("*/5 * * * *", async function () {
 
   //Check if manga has a new chapter
 
-  // const mangaSeeResults = (await mangasee.scrape(browser, mangaSeeUrls)).filter((manga) => {
-  //   const nameLatestChapter = NameLatestChapterMap.find((n) => n.name === manga.title && n.source === manga.source);
-  //   if (!nameLatestChapter) {
-  //     return false;
-  //   }
-  //   const latestChapter = nameLatestChapter.latestChapter;
-  //   if (latestChapter === manga.latestChapter) {
-  //     return false;
-  //   }
-  //   if (nameLatestChapter.latestChapter === null || nameLatestChapter.latestChapter === undefined) {
-  //     return true;
-  //   }
-  //   console.log("OLD CHAPTER: " + latestChapter);
-  //   console.log("NEW CHAPTER: " + manga.latestChapter);
-  //   resultsToAnnounce.push(manga);
-  //   return true;
-  // });
+  const mangaSeeResults = (await mangasee.scrape(browser, mangaSeeUrls)).filter((manga) => {
+    const nameLatestChapter = NameLatestChapterMap.find((n) => n.name === manga.title && n.source === manga.source);
+    if (!nameLatestChapter) {
+      return false;
+    }
+    const latestChapter = nameLatestChapter.latestChapter;
+    if (latestChapter === manga.latestChapter) {
+      return false;
+    }
+    if (nameLatestChapter.latestChapter === null || nameLatestChapter.latestChapter === undefined) {
+      return true;
+    }
+    console.log("OLD CHAPTER: " + latestChapter);
+    console.log("NEW CHAPTER: " + manga.latestChapter);
+    resultsToAnnounce.push(manga);
+    return true;
+  });
 
   // console.log(asuraResults);
 
@@ -350,36 +350,36 @@ const job = schedule.scheduleJob("*/5 * * * *", async function () {
 
   //Update latest chapter
   const guilds = await prisma.guild.findMany();
-  // guilds.forEach(async (guild) => {
-  //   mangaSeeResults.forEach(async (manga) => {
-  //     const existingSeries = await prisma.series.findUnique({
-  //       where: {
-  //         title_source_guildId: {
-  //           title: manga.title,
-  //           source: manga.source,
-  //           guildId: guild.id,
-  //         },
-  //       },
-  //     });
-  //     if (existingSeries) {
-  //       await prisma.series.update({
-  //         where: {
-  //           title_source_guildId: {
-  //             title: manga.title,
-  //             source: manga.source,
-  //             guildId: guild.id,
-  //           },
-  //         },
-  //         data: {
-  //           latestChapter: manga.latestChapter,
-  //           lastSrapedAt: new Date(),
-  //         },
-  //       });
-  //     } else {
-  //       console.error(`Series not found: ${manga.title} (${manga.source}) OR series up-to-date`);
-  //     }
-  //   });
-  // });
+  guilds.forEach(async (guild) => {
+    mangaSeeResults.forEach(async (manga) => {
+      const existingSeries = await prisma.series.findUnique({
+        where: {
+          title_source_guildId: {
+            title: manga.title,
+            source: manga.source,
+            guildId: guild.id,
+          },
+        },
+      });
+      if (existingSeries) {
+        await prisma.series.update({
+          where: {
+            title_source_guildId: {
+              title: manga.title,
+              source: manga.source,
+              guildId: guild.id,
+            },
+          },
+          data: {
+            latestChapter: manga.latestChapter,
+            lastSrapedAt: new Date(),
+          },
+        });
+      } else {
+        console.error(`Series not found: ${manga.title} (${manga.source}) OR series up-to-date`);
+      }
+    });
+  });
   guilds.forEach(async (guild) => {
     asuraResults.forEach(async (manga) => {
       const existingSeries = await prisma.series.findUnique({
