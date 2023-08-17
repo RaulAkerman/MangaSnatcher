@@ -62,6 +62,7 @@ export default class MangaSee implements IScraper {
 
   public async checkIfScrapeable(url: string, browser: Browser): Promise<boolean> {
     const page = await browser.newPage();
+    try{
     await page.goto(url, { waitUntil: "networkidle2" });
     await page.waitForSelector("li.list-group-item.d-none.d-sm-block > h1");
     const title = await page.evaluate(() => {
@@ -77,6 +78,13 @@ export default class MangaSee implements IScraper {
     await page.close();
 
     return title !== null && title !== undefined;
+  } catch (e) {
+    console.error(e);
+  }
+    finally {
+      await page.close();
+    }
+    return false;
   }
 
   public async getTitleName(url: string, browser: Browser): Promise<string> {
