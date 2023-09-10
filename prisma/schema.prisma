@@ -38,3 +38,9 @@ model Series {
   @@unique([title, source, guildId])
   @@map("series")
 }
+
+model LastScrape {
+  id        String   @id @default(uuid())
+  timestamp DateTime @default(now()) @map("timestamp")
+  @@map("last_scrape")
+} 

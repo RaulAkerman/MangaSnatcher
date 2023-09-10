@@ -11,16 +11,37 @@ import MangaSee from "./scraper/modules/mangasee";
 import client from "./client";
 import { Browser } from "puppeteer";
 import { join } from "@prisma/client/runtime";
+//import log from "why-is-node-running";
 dotenv.config();
 pupeteer.use(StealthPlugin());
-
 
 // To run every 6 hours, change the first argument to "0 */6 * * *"
 // To run every 12 hours, change the first argument to "0 */12 * * *"
 // To run every 30 minutes change the first argument to "*/30 * * * *"
 // To run every minute change the first argument to "* * * * *"
 
-const job = schedule.scheduleJob("*/10 * * * *", async function () {
+const job = schedule.scheduleJob("*/30 * * * *", async function () {
+  //Check if has been 30 minutes since last scrape
+  const lastScrape = await prisma.lastScrape.findFirst({
+    where: {
+      timestamp: {
+        gt: new Date(new Date().getTime() - 30 * 60000),
+      },
+    },
+  });
+  if (lastScrape) {
+    // wait 30 minutes
+    console.log("Job cancelled");
+    await Promise.resolve(new Promise((resolve) => setTimeout(resolve, 30 * 60000)));
+    console.log("EXIT");
+    //prisma.$disconnect();
+    //client.destroy();
+    //process.removeAllListeners();
+    await process.exit();
+  } else {
+    console.log("Job not cancelled");
+  }
+
   console.log("Running job at time: ", new Date().toLocaleString());
   const args = [
     "--aggressive-cache-discard",
@@ -215,7 +236,24 @@ const job = schedule.scheduleJob("*/10 * * * *", async function () {
   //Clear puppeteer cache
   await browser.close();
 
-
+  //Update last scrape
+  const lastScrape2 = await prisma.lastScrape.findFirst();
+  if (lastScrape2) {
+    await prisma.lastScrape.update({
+      where: {
+        id: lastScrape2.id,
+      },
+      data: {
+        timestamp: new Date(),
+      },
+    });
+  } else {
+    await prisma.lastScrape.create({
+      data: {
+        timestamp: new Date(),
+      },
+    });
+  }
 });
 
 (async () => {
@@ -419,6 +457,5 @@ const job = schedule.scheduleJob("*/10 * * * *", async function () {
 
   //Start job
   job.invoke();
-  
   console.log("Running");
 })().catch((e) => console.error(e));
