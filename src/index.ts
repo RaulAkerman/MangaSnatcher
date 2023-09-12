@@ -10,15 +10,20 @@ import AsuraScans from "./scraper/modules/asurascans";
 import MangaSee from "./scraper/modules/mangasee";
 import client from "./client";
 import { Browser } from "puppeteer";
-import { join } from "@prisma/client/runtime";
+import { PrismaClientInitializationError, join } from "@prisma/client/runtime";
+import { getChannelInstances, getSeriesByChannelId, allLatestChapters, findGuildSeries, guildAddSeries, guildDeleteSeries } from "./database";
 //import log from "why-is-node-running";
 dotenv.config();
 pupeteer.use(StealthPlugin());
+
+
 
 // To run every 6 hours, change the first argument to "0 */6 * * *"
 // To run every 12 hours, change the first argument to "0 */12 * * *"
 // To run every 30 minutes change the first argument to "*/30 * * * *"
 // To run every minute change the first argument to "* * * * *"
+
+
 
 const job = schedule.scheduleJob("*/30 * * * *", async function () {
   //Check if has been 30 minutes since last scrape
@@ -42,7 +47,13 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
     console.log("Job not cancelled");
   }
 
+
+
+
   console.log("Running job at time: ", new Date().toLocaleString());
+
+
+
   const args = [
     "--aggressive-cache-discard",
     "--disable-cache",
@@ -52,9 +63,14 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
     "--media-cache-size=0",
     "--disk-cache-size=0",
   ];
+
+
   const browser = await pupeteer.launch({ headless: true, args });
   const asurascans = new AsuraScans();
   const mangasee = new MangaSee();
+
+
+
 
   //Find all URLs that have MangaSee as the source
   const mangaSeeUrls = await prisma.series
@@ -65,12 +81,12 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
     })
     .then((series) => series.map((s) => s.url));
 
-  //Find series names and latest chapters
-  const NameLatestChapterMap = await prisma.series
-    .findMany()
-    .then((series) => series.map((s) => ({ name: s.title, latestChapter: s.latestChapter, source: s.source })));
 
+  //Latest chapters
+  const NameLatestChapterMap = await allLatestChapters()
   console.log(NameLatestChapterMap);
+
+
 
   let resultsToAnnounce: any[] = [];
 
@@ -92,6 +108,8 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
     return true;
   });
 
+
+
   //Check if manga has a new chapter
 
   const mangaSeeResults = (await mangasee.scrape(browser, mangaSeeUrls)).filter((manga) => {
@@ -112,21 +130,21 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
     return true;
   });
 
+
+
   // console.log(asuraResults);
 
   //const mangas = asuraResults.filter((manga) => mangasToWatch.includes(manga.title));
-  let channels = await prisma.series.findMany({
-    select: {
-      channelId: true,
-    },
-  });
 
-  //Remove duplicate channels
-  channels = channels.filter((channel, index, self) => {
-    return index === self.findIndex((c) => c.channelId === channel.channelId);
-  });
+  let channels = await getChannelInstances()
 
-  channels.forEach(async (channel) => {
+
+  //probably bad solution thinking of better fix
+  interface channel {
+    channelId: string
+  }
+
+  channels.forEach(async (channel:channel) => {
     const channelInstance = client.channels.cache.get(channel.channelId);
 
     //Find series with channel id and mangasee as source
@@ -140,6 +158,8 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
         latestChapter: true,
       },
     });
+
+
 
     //Get the series names
     const mangaSeeSeriesNames = MangaSeeSeries.map((s) => s.title);
@@ -171,8 +191,10 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
 
   //Update latest chapter
   const guilds = await prisma.guild.findMany();
+
   guilds.forEach(async (guild) => {
     mangaSeeResults.forEach(async (manga) => {
+
       const existingSeries = await prisma.series.findUnique({
         where: {
           title_source_guildId: {
@@ -182,6 +204,7 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
           },
         },
       });
+
       if (existingSeries) {
         await prisma.series.update({
           where: {
@@ -401,6 +424,20 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
       await message.channel.send(`Added ${seriesTitle} to the watchlist!`);
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     if (message.content.startsWith("!remove")) {
       const url = message.content.slice("!remove".length).trim();
       const domainName = extractDomainName(url);
@@ -439,6 +476,11 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
       await message.channel.send(`Removed ${seriesTitle} from the list of series to watch!`);
     }
 
+
+
+
+
+
     if (message.content.startsWith("!list")) {
       const series = await prisma.series.findMany({
         where: {
@@ -451,9 +493,13 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
     }
   });
 
+
+
   await client.login(process.env.DISCORD_TOKEN);
   const asurascans = new AsuraScans();
   const mangasee = new MangaSee();
+
+
 
   //Start job
   job.invoke();
