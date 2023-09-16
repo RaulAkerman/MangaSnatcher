@@ -8,6 +8,8 @@ export enum ScraperSource {
   MangaSee = "mangasee123.com",
 }
 
+
+
 export interface ScraperResult {
   title: string
   seriesUrl: string
@@ -18,4 +20,7 @@ export interface ScraperResult {
 
 export interface IScraper {
     scrape(browser: Browser, urls: string[]): Promise<Array<ScraperResult>>;
+    checkIfScrapeable(url: string, browser: Browser): Promise<boolean>;
+    getTitleName(url: string, browser: Browser): Promise<string>;
 }
+

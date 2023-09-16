@@ -3,7 +3,34 @@ import { Message, Guild } from "discord.js";
 import prisma from "./prisma";
 import client from "./client";
 
-//
+
+
+
+export const getMangaMap = async () => {
+  let allseries = await prisma.series.findMany({
+    where: {},
+    select: {
+      id: true,
+      url: true,
+      source: true,
+    },
+  });
+  return allseries
+};
+
+export const updateSeriesFromMangaMap =async (params:Series) => {
+    await prisma.series.update({
+        where: {
+            id: params.id,
+        },
+        data: {
+            latestChapter: params.latestChapter,
+            //!!!!Verify Date will construct correct date or if it need imput!!!!
+            lastSrapedAt: Date()
+        }
+    })
+}
+
 export const getChannelInstances = async () => {
   let unfilteredChannels = await prisma.series.findMany({
     select: {
@@ -14,9 +41,8 @@ export const getChannelInstances = async () => {
   const filteredChannels = unfilteredChannels.filter((channel, index, self) => {
     return index === self.findIndex((c) => c.channelId === channel.channelId);
   });
-  return filteredChannels
+  return filteredChannels;
 };
-
 
 //Finds series for a specific channel id
 export const getSeriesByChannelId = async (args: string) => {
@@ -38,7 +64,7 @@ export const allLatestChapters = async () => {
   let data = await prisma.series
     .findMany()
     .then((series) => series.map((s) => ({ name: s.title, latestChapter: s.latestChapter, source: s.source })));
-    return data
+  return data;
 };
 
 export const findGuildSeries = async (message: Guild, argsurl: string) => {

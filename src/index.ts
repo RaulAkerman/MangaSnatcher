@@ -1,20 +1,39 @@
 import dotenv from "dotenv";
-import pupeteer from "puppeteer-extra";
+import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import prisma from "./prisma";
 import * as schedule from "node-schedule";
 import { Client, Events, GatewayIntentBits, Guild, channelLink, managerToFetchingStrategyOptions } from "discord.js";
-import { map, next } from "cheerio/lib/api/traversing";
 import { Message } from "discord.js";
 import AsuraScans from "./scraper/modules/asurascans";
 import MangaSee from "./scraper/modules/mangasee";
 import client from "./client";
-import { Browser } from "puppeteer";
-import { PrismaClientInitializationError, join } from "@prisma/client/runtime";
+import { Browser, Puppeteer } from "puppeteer";
 import { getChannelInstances, getSeriesByChannelId, allLatestChapters, findGuildSeries, guildAddSeries, guildDeleteSeries } from "./database";
+import {runner} from "./scraper/modules/handler"
+import { Series } from "@prisma/client";
+
+
 //import log from "why-is-node-running";
 dotenv.config();
-pupeteer.use(StealthPlugin());
+puppeteer.use(StealthPlugin());
+console.log(process.pid)
+
+const test:Series[] = [{
+  id: "1",
+  title: "The Saga of Tanya the Evil",
+  url: "https://mangasee123.com/manga/Youjo-Senki",
+  source: "mangasee123.com",
+  latestChapter: "64",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  lastSrapedAt: new Date(),
+  channelId: "Something",
+  guildId: "Something Else"
+}]
+
+runner(test)
+
 
 
 
@@ -22,7 +41,6 @@ pupeteer.use(StealthPlugin());
 // To run every 12 hours, change the first argument to "0 */12 * * *"
 // To run every 30 minutes change the first argument to "*/30 * * * *"
 // To run every minute change the first argument to "* * * * *"
-
 
 
 const job = schedule.scheduleJob("*/30 * * * *", async function () {
@@ -50,6 +68,38 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
   console.log("Running job at time: ", new Date().toLocaleString());
 
 
@@ -65,7 +115,7 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
   ];
 
 
-  const browser = await pupeteer.launch({ headless: true, args });
+  const browser = await puppeteer.launch({ headless: "new" , args });
   const asurascans = new AsuraScans();
   const mangasee = new MangaSee();
 
@@ -139,7 +189,7 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
   let channels = await getChannelInstances()
 
 
-  //probably bad solution thinking of better fix
+  //probably better way
   interface channel {
     channelId: string
   }
@@ -280,7 +330,7 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
 });
 
 (async () => {
-  const browser = await pupeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({headless: "new" ,});
   client.once(Events.ClientReady, async (c) => {
     console.log(`Logged in as ${c.user.tag}`);
     c.guilds.cache.forEach(async (guild) => {
@@ -354,6 +404,10 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
           return;
         }
       } else if (domainName === "mangasee123.com") {
+        if (!browser) {
+          throw new Error("browser doesnt exist")
+          
+        }
         const existingSeries = await prisma.series.findFirst({
           where: {
             url: url,
@@ -494,7 +548,7 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
   });
 
 
-
+console.log("trying to log in")
   await client.login(process.env.DISCORD_TOKEN);
   const asurascans = new AsuraScans();
   const mangasee = new MangaSee();

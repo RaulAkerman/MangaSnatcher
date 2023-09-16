@@ -2,12 +2,13 @@
   "name": "mangasnatcher",
   "version": "1.0.0",
   "description": "Webscraping app to get updates of manga chapters.",
-  "main": "index.js",
+  "main": "./src/scraper/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev --respawn --transpile-only ./src/index.ts",
+    "dev": "bun run ./src/index.ts",
     "build": "tsc && yarn prisma generate",
-    "start": "yarn prisma migrate deploy && node ./dist/index.js"
+    "start": "yarn prisma migrate deploy && node ./dist/index.js",
+    "worker": "bun run ./src/scraper/modules/scrapeworker.ts"
   },
   "repository": {
     "type": "git",
@@ -22,6 +23,7 @@
   "homepage": "https://github.com/RaulAkerman/MangaSnatcher#readme",
   "dependencies": {
     "@prisma/client": "4.16.2",
+    "@types/node-schedule": "^2.1.0",
     "@types/pg": "^8.10.2",
     "axios": "^1.4.0",
     "cheerio": "^1.0.0-rc.12",
@@ -34,7 +36,13 @@
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.1.6",
-    "@types/node-schedule": "^2.1.0"
+    "typescript": "^5.1.6"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
   }
+
 }
