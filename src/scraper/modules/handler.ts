@@ -31,17 +31,17 @@ function generateTaskData(seriesData: Series[] | Series | string): any[] {
 function createCheckTask(taskType: Check, taskData: any[]): Check {
   return {
     ...taskType,
-    task: {
-      source: 'check-source',
-      url: 'check-url',
-    },
+    task: taskData.map((data) => ({
+      source: data.source,
+      url: data.url,
+    })),
   };
 }
 
 function createExtractTask(taskType: Extract, taskData: any[]): Extract {
   return {
     ...taskType,
-    task: taskData.map((data, index) => ({
+    task: taskData.map((data) => ({
       source: data.source,
       url: data.url,
     })),
@@ -51,7 +51,7 @@ function createExtractTask(taskType: Extract, taskData: any[]): Extract {
 function createLatestTask(taskType: Latest, taskData: any[]): Latest {
   return {
     ...taskType,
-    task: taskData.map((data, index) => ({
+    task: taskData.map((data) => ({
       id: data.id,
       source: data.source,
       url: data.url,

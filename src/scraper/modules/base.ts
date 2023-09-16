@@ -32,18 +32,20 @@ export interface BaseTask {
 
 export interface Check extends BaseTask {
   type: 'check';
-  task: {
+  task: Array<{
+    id?:String,
     source:string,
     url:string
-  },
+  }>,
 }
 
 export interface Extract extends BaseTask {
   type: 'extract';
-  task: {
+  task: Array<{
+    id?:String,
     source:string,
     url:string
-  },
+  }>,
 }
 
 export interface Latest extends BaseTask {
