@@ -2,7 +2,7 @@ import { LastScrape, Prisma, PrismaPromise, Series, SeriesPayload } from "@prism
 import { Message, Guild } from "discord.js";
 import prisma from "./prisma";
 import client from "./client";
-
+import type { BaseMessage } from "./scraper/modules/base.ts";
 
 
 

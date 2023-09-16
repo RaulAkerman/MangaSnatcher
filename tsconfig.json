@@ -1,10 +1,6 @@
 {
   "compilerOptions": {
-    "paths":{
-      "TheWorker": ["./src/scraper/modules/scrapeworker.ts"],
-      "modules/*": ["./src/scraper/modules/*"],
-      "src/*":["./src/*"]
-    },
+    "baseUrl": "./src",
     "lib": ["ESNext"],
     "module": "esnext",
     "target": "esnext",

@@ -1,5 +1,5 @@
 import type { Browser } from "puppeteer";
-import { ScraperResult, IScraper, ScraperSource } from "../base";
+import { ScraperResult, IScraper, ScraperSource } from "./base";
 
 export default class AsuraScans implements IScraper {
   private siteUrl = "https://asura.gg/";
