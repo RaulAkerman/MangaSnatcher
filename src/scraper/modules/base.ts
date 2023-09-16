@@ -57,7 +57,7 @@ export interface Latest extends BaseTask {
   }>,
 }
 
-type TaskType = Check | Extract | Latest;
+export type TaskType = Check | Extract | Latest;
 
 export const isTypeCheck = (task: TaskType): task is Check => {
   return task.type === 'check';
@@ -79,11 +79,24 @@ export const PayloadTypeChecker = (params: TaskType,) => {
   }
 };
 
+export const encode = (data: any): string => {
+  return btoa(JSON.stringify(data))
+}
+
+export function decode<T>(data: string): T {
+  return JSON.parse(atob(data))
+}
+
 export const getDomainName = (url: string): string | null => {
   const regex = /^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n?]+)/gim;
   const match = regex.exec(url);
   return match ? match[1] : null;
 }
 
+export enum ScraperMethod {
+  Check = 'check',
+  Extract = 'extract',
+  Latest = 'latest',
+}
 
 export default TaskType;

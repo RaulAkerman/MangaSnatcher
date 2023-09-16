@@ -1,9 +1,7 @@
-import { Series, SeriesPayload } from '@prisma/client';
-import * as path from 'path';
-import puppeteer from 'puppeteer-extra';
-import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import TaskType, { PayloadTypeChecker, Check, Extract, Latest} from './base.ts';
+import { Series } from '@prisma/client';
+import TaskType, { Check, Extract, Latest } from './base.ts';
 import { getDomainName } from './base.ts';
+import { ScraperMethod } from './base.ts';
 // import { isTypeCheck, isTypeExtract, isTypeLatest } from './base.ts';
 // Handler is called with an array of Series and string "method"
 // We iterate through every series and map every series.url new array within a ScraperJob
@@ -60,9 +58,10 @@ function createLatestTask(taskType: Latest, taskData: any[]): Latest {
   };
 }
 
+
 function createTask(
   taskType: TaskType,
-  taskData: any[]
+  taskData: any[],
 ): Check | Extract | Latest {
   if (taskType.type === 'check') {
     return createCheckTask(taskType, taskData);
@@ -76,49 +75,38 @@ function createTask(
 }
 
 
+export const scraperCall = async (seriesInput: Series[] | Series | string, method: ScraperMethod) => {
+  let taskType: TaskType;
+
+  if (method === ScraperMethod.Check) {
+    taskType = { type: "check", task: [] };
+  } else if (method === ScraperMethod.Extract) {
+    taskType = { type: "extract", task: [] };
+  } else if (method === ScraperMethod.Latest) {
+    taskType = { type: "latest", task: [] };
+  } else {
+    throw new Error("Invalid scraper method");
+  }
+
+  const tasklist = createTask(taskType, generateTaskData(seriesInput));
+
+  const base64 = btoa(JSON.stringify(tasklist));
+
+  const proc = Bun.spawn(["bun", "run", "./scrapeworker.ts", base64], {
+    cwd: "./src/scraper/modules",
+    env: {},
+  });
+
+  const encodedoutput = await new Response(proc.stdout).text();
+
+  let output = atob(encodedoutput)
+
+  console.log(output)
+  return true
+};
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-puppeteer.use(StealthPlugin());
-
-const __dirname = path.resolve();
-
+//dumbyload for testing
 const test:Series[] = [{
   id: "1",
   title: "The Saga of Tanya the Evil",
@@ -131,47 +119,3 @@ const test:Series[] = [{
   channelId: "Something",
   guildId: "Something Else"
 }]
-
-
-for (const obj of objectsToSend) {
-  const base64 = btoa(JSON.stringify(obj))
-
-  const proc = Bun.spawn(['bun', 'run', './scrapeworker.ts', base64], {
-    cwd: "./src/scraper/modules",
-    env: {}
-  });
-
-  const output = await new Response(proc.stdout).text();
-
-  console.log(output);
-}
-
-
-/*
-async function runPuppeteer(data: Series[]): Promise<any> {
-  const jsonData = JSON.stringify(data);
-  const b64Data = Buffer.from(jsonData).toString('base64');
-  let stdoutData = '';
-
-}
-
-export const runner =async (data:Series[]) => {
-  let i = 0;
-  while (true) {
-    const resData = await runPuppeteer(data);
-    console.log(resData)
-    if (!resData) {
-      console.error('Was not able to load a page');
-    }
-
-    console.log('🎉 Scraper Spawned');
-  }  
-}
-*/
-
-
-
-
-
-
-

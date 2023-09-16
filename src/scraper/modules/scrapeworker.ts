@@ -3,20 +3,46 @@ import AsuraScans from './asurascans';
 import puppeteer from 'puppeteer-extra';
 import type { Series } from '@prisma/client';
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import { ScraperResult, IScraper, ScraperSource } from "./base";
+import TaskType, { ScraperResult, IScraper, ScraperSource, ScraperMethod, Check, Extract, Latest, isTypeCheck} from "./base";
+import { decode } from "./base"
+
 
 puppeteer.use(StealthPlugin());
 
+const args = Bun.argv.slice(2)
 
-const inpDataArg = process.argv.find((a) => a.startsWith('--input-data'));
-const inpDataB64 = inpDataArg ? inpDataArg.replace('--input-data', '') : '';
-const inputData:Series[] = inpDataB64 ? JSON.parse(Buffer.from(inpDataB64, 'base64').toString()) : {};
+const rawData = args[0]
+
+const dataa = decode<TaskType>(rawData)
+
+switch (dataa.type) {
+  case 'check':
+    await Bun.write(Bun.stdout, `Check got url: ${dataa.url}`)
+    break
+  case 'extract':
+    await Bun.write(Bun.stdout, `Extract got url: ${dataa.url}`)
+    break
+  case 'latest':
+    await Bun.write(Bun.stdout, `Latest got urls: ${dataa.url}`)
+    break
+}
+
+
+
+
+
+
+
+let scrapmethod = new Map<TaskType, IScraper>([
+  [Check, new getTitleName()],
+  [Extract, new checkIfScrapeable()],
+  [Latest, new scrape()]
+]);
+
 let scrapers = new Map<ScraperSource, IScraper>([
     [ScraperSource.AsuraScans, new AsuraScans()],
     [ScraperSource.MangaSee, new MangaSee()]
 ]);
-
-main(inputData);
 
 async function main(series: Series[]) {
   const browser = await puppeteer.launch({args: ["--no-sandbox", "--disable-setuid-sandbox"] });
