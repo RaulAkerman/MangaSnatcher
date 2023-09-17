@@ -1,10 +1,72 @@
-import MangaSee from './mangasee';
-import AsuraScans from './asurascans';
+import MangaSeescraper from './mangasee';
+import AsuraScanscraper from './asurascans';
 import puppeteer from 'puppeteer-extra';
 import type { Series } from '@prisma/client';
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import TaskType, { ScraperResult, IScraper, ScraperSource, ScraperMethod, Check, Extract, Latest, isTypeCheck} from "./base";
 import { decode } from "./base"
+
+
+//#region 
+import { BrowserSources, BrowserScape, ApiScrape, ApiSources, Base, Source, AsuraScans, MangaSee, ReaperScans, MangaDex } from './base';
+type BrowserScraperMapper = {
+  [key in BrowserSources]: Base<BrowserScape>;
+};
+
+type ApiScraperMapper = {
+  [key in ApiSources]: Base<ApiScrape>;
+};
+
+const browserScraperMapper: BrowserScraperMapper = {
+  [Source.AsuraScans]: new AsuraScans(),
+  [Source.MangaSee]: new MangaSee(),
+  [Source.ReaperScans]: new ReaperScans(),
+};
+
+const apiScraperMapper: ApiScraperMapper = {
+  [Source.MangaDex]: new MangaDex(),
+};
+
+const isBrowserSource = (source: Source): source is BrowserSources => {
+  return source in browserScraperMapper;
+};
+
+const isApiSource = (source: Source): source is ApiSources => {
+  return source in apiScraperMapper;
+};
+
+type SourceToScrapeType = {
+  [Source.AsuraScans]: BrowserScape;
+  [Source.MangaSee]: BrowserScape;
+  [Source.ReaperScans]: BrowserScape;
+  [Source.MangaDex]: ApiScrape;
+};
+
+type ScraperMapper = {
+  [key in Source]: Base<SourceToScrapeType[key]>;
+};
+
+const scraperMapper: ScraperMapper = {
+  [Source.AsuraScans]: new AsuraScans(),
+  [Source.MangaSee]: new MangaSee(),
+  [Source.ReaperScans]: new ReaperScans(),
+  [Source.MangaDex]: new MangaDex(),
+};
+//#region 
+
+const scraper = <S extends Source>(source: S): Base<SourceToScrapeType[S]> => {
+  const base = scraperMapper[source];
+  if (!base) {
+    throw new Error(`Source ${source} not found`);
+  }
+  return base as Base<SourceToScrapeType[S]>;
+};
+
+
+
+
+
+
+
 
 
 puppeteer.use(StealthPlugin());
@@ -13,19 +75,16 @@ const args = Bun.argv.slice(2)
 
 const rawData = args[0]
 
-const dataa = decode<TaskType>(rawData)
+const data = decode<TaskType>(rawData)
 
-switch (dataa.type) {
-  case 'check':
-    await Bun.write(Bun.stdout, `Check got url: ${dataa.url}`)
-    break
-  case 'extract':
-    await Bun.write(Bun.stdout, `Extract got url: ${dataa.url}`)
-    break
-  case 'latest':
-    await Bun.write(Bun.stdout, `Latest got urls: ${dataa.url}`)
-    break
-}
+// switch (dataa.type) {
+//   case 'check':
+//   const datatyped = data as Check
+//   case 'extract':
+
+//   case 'latest':
+
+// }
 
 
 
@@ -33,11 +92,11 @@ switch (dataa.type) {
 
 
 
-let scrapmethod = new Map<TaskType, IScraper>([
-  [Check, new getTitleName()],
-  [Extract, new checkIfScrapeable()],
-  [Latest, new scrape()]
-]);
+// let scrapmethod = new Map<TaskType, IScraper>([
+//   [Check, getTitleName],
+//   [Extract, checkIfScrapeable],
+//   [Latest, scrape]
+// ]);
 
 let scrapers = new Map<ScraperSource, IScraper>([
     [ScraperSource.AsuraScans, new AsuraScans()],
