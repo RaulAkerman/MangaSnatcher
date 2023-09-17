@@ -1,10 +1,10 @@
-import MangaSeescraper from './mangasee';
-import AsuraScanscraper from './asurascans';
+import MangaSeeScraper from './mangasee';
+import AsuraScanScraper from './asurascans';
 import puppeteer from 'puppeteer-extra';
 import type { Series } from '@prisma/client';
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { decode } from "./base"
-
+import TaskType, { Check, Extract, Latest } from './base.ts';
 
 //#region 
 import { BrowserSources, BrowserScape, ApiScrape, ApiSources, Base, Source, AsuraScans, MangaSee, ReaperScans, MangaDex } from './base';
@@ -61,14 +61,6 @@ const scraper = <S extends Source>(source: S): Base<SourceToScrapeType[S]> => {
   return base as Base<SourceToScrapeType[S]>;
 };
 
-
-
-
-
-
-
-
-
 puppeteer.use(StealthPlugin());
 
 const args = Bun.argv.slice(2)
@@ -77,14 +69,9 @@ const rawData = args[0]
 
 const data = decode<TaskType>(rawData)
 
-// switch (dataa.type) {
-//   case 'check':
-//   const datatyped = data as Check
-//   case 'extract':
+for ( const task of data.task) {
 
-//   case 'latest':
-
-// }
+}
 
 
 
@@ -98,28 +85,28 @@ const data = decode<TaskType>(rawData)
 //   [Latest, scrape]
 // ]);
 
-let scrapers = new Map<ScraperSource, IScraper>([
-    [ScraperSource.AsuraScans, new AsuraScans()],
-    [ScraperSource.MangaSee, new MangaSee()]
-]);
+// let scrapers = new Map<ScraperSource, IScraper>([
+//     [ScraperSource.AsuraScans, new AsuraScans()],
+//     [ScraperSource.MangaSee, new MangaSee()]
+// ]);
 
-async function main(series: Series[]) {
-  const browser = await puppeteer.launch({args: ["--no-sandbox", "--disable-setuid-sandbox"] });
-  const page = await browser.newPage();
-  await page.setCacheEnabled(false);
+// async function main(series: Series[]) {
+//   const browser = await puppeteer.launch({args: ["--no-sandbox", "--disable-setuid-sandbox"] });
+//   const page = await browser.newPage();
+//   await page.setCacheEnabled(false);
 
-  try {
+//   try {
     
-    for (const serie of series) {
-      let scrapeResults: Promise<ScraperResult[]> = scrapers.get(serie.source as ScraperSource).scrape(browser, [serie.url]);
-      let conditionedResults = JSON.stringify(scrapeResults);
-      const outputData = { conditionedResults };
-      console.error(outputData); // Use console.error for output data
-    }
-  } catch (error) {
-    console.error(`Error: ${error}`);
-  } finally {
-    await page.close();
-    await browser.close();
-  }
-}
+//     for (const serie of series) {
+//       let scrapeResults: Promise<ScraperResult[]> = scrapers.get(serie.source as ScraperSource).scrape(browser, [serie.url]);
+//       let conditionedResults = JSON.stringify(scrapeResults);
+//       const outputData = { conditionedResults };
+//       console.error(outputData); // Use console.error for output data
+//     }
+//   } catch (error) {
+//     console.error(`Error: ${error}`);
+//   } finally {
+//     await page.close();
+//     await browser.close();
+//   }
+// }

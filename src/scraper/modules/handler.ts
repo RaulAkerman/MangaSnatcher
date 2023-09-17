@@ -2,34 +2,8 @@ import { Series } from '@prisma/client';
 import TaskType, { Check, Extract, Latest } from './base.ts';
 import { getDomainName, BaseTask } from './base.ts';
 import { ScraperMethod } from './base.ts';
-import { EnumMember } from 'typescript';
-// import { isTypeCheck, isTypeExtract, isTypeLatest } from './base.ts';
-// Handler is called with an array of Series and string "method"
-// We iterate through every series and map every series.url new array within a ScraperJob
-//          - type: ("method"), (url[] || url)
 
-
-//dumbyload for testing
-const test:Series[] = [{
-  id: "1",
-  title: "The Saga of Tanya the Evil",
-  url: "https://mangasee123.com/manga/Youjo-Senki",
-  source: "mangasee123.com",
-  latestChapter: "64",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  lastSrapedAt: new Date(),
-  channelId: "Something",
-  guildId: "Something Else"
-}]
-
-type ScraperMethodToTaskType = {
-  [ScraperMethod.Check]: Check;
-  [ScraperMethod.Extract]: Extract;
-  [ScraperMethod.Latest]: Latest; // Example mapping, adjust as needed
-};
-
-function generateBaseTask(method: ScraperMethod): TaskType | undefined {
+export function generateBaseTask(method: ScraperMethod): TaskType | undefined {
   let taskType: TaskType | undefined;
 
   if (method === ScraperMethod.Check) {
@@ -45,7 +19,7 @@ function generateBaseTask(method: ScraperMethod): TaskType | undefined {
   return taskType;
 }
 
-function generateTaskData(seriesData: Series[] | Series | string): any[] {
+export function generateTaskData(seriesData: Series[] | Series | string): any[] {
   if (typeof seriesData === 'string') {
     return [{ source: getDomainName(seriesData), url: seriesData}];
   } else {
@@ -63,7 +37,7 @@ function generateTaskData(seriesData: Series[] | Series | string): any[] {
   }
 }
 
-function createCheckTask(taskType: Check, taskData: any[]): Check {
+export function createCheckTask(taskType: Check, taskData: any[]): Check {
   return {
     ...taskType,
     task: taskData.map((data) => ({
@@ -73,7 +47,7 @@ function createCheckTask(taskType: Check, taskData: any[]): Check {
   };
 }
 
-function createExtractTask(taskType: Extract, taskData: any[]): Extract {
+export function createExtractTask(taskType: Extract, taskData: any[]): Extract {
   return {
     ...taskType,
     task: taskData.map((data) => ({
@@ -83,7 +57,7 @@ function createExtractTask(taskType: Extract, taskData: any[]): Extract {
   };
 }
 
-function createLatestTask(taskType: Latest, taskData: any[]): Latest {
+export function createLatestTask(taskType: Latest, taskData: any[]): Latest {
   return {
     ...taskType,
     task: taskData.map((data) => ({
@@ -95,7 +69,7 @@ function createLatestTask(taskType: Latest, taskData: any[]): Latest {
   };
 }
 
-function createTask(
+export function createTask(
   taskType: TaskType | undefined,
   taskData: any[],
 ): Check | Extract | Latest {
@@ -113,7 +87,7 @@ function createTask(
   }
 }
 
-// Example of createTask syntax
+//Calls spawns worker and provides it with a tasklist and taskmethod
 export const scraperCall = async (seriesInput: Series[] | Series | string, method: ScraperMethod) => {
 
   const tasklist = createTask(generateBaseTask(method), generateTaskData(seriesInput));
