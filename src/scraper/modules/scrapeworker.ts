@@ -7,6 +7,7 @@ import { decode } from "./base"
 import TaskType, { Check, Extract, Latest } from './base.ts';
 
 //#region 
+
 import { BrowserSources, BrowserScape, ApiScrape, ApiSources, Base, Source, AsuraScans, MangaSee, ReaperScans, MangaDex } from './base';
 type BrowserScraperMapper = {
   [key in BrowserSources]: Base<BrowserScape>;
@@ -51,7 +52,8 @@ const scraperMapper: ScraperMapper = {
   [Source.ReaperScans]: new ReaperScans(),
   [Source.MangaDex]: new MangaDex(),
 };
-//#region 
+
+//#endregion
 
 const scraper = <S extends Source>(source: S): Base<SourceToScrapeType[S]> => {
   const base = scraperMapper[source];
