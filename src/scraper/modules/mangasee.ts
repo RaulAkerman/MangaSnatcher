@@ -4,7 +4,7 @@ import type { ScrapeResult, LatestChapterResult, SeriesInfoResult } from "./base
 
 export default class MangaSeeScraper implements Base<BrowserScape> {
   private static readonly seriesSelector = ".series";
-  private static readonly elementSelector = ".postbody";
+  private static readonly elementSelector = "p-2 space-y-4 lg:col-span-2 lg:col-start-1 lg:p-0";
 
   public async setupPage(browser: Browser): Promise<Page> {
     const page = await browser.newPage();
@@ -41,7 +41,7 @@ export default class MangaSeeScraper implements Base<BrowserScape> {
       const chapterUrl = await pageElement.$eval("a.list-group-item.ChapterLink.ng-scope", (element) =>
         element.getAttribute("href"),
       );
-
+        //MAJOR CORRECTION NEEDED Chapters come out as /read-online/Oshi-no-Ko-chapter-126-page-1.html !!!!! NEED TO ADD SOURCE INFRONT!!!!
       if (!title || !latestChapter || !chapterUrl) {
         return null;
       }

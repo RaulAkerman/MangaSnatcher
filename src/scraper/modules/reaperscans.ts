@@ -4,7 +4,7 @@ import type { ScrapeResult, LatestChapterResult, SeriesInfoResult } from "./base
 
 export default class ReaperScanScraper implements Base<BrowserScape> {
   private static readonly seriesSelector = ".series";
-  private static readonly elementSelector = ".postbody";
+  private static readonly elementSelector = ".mb-auto";
 
   public async setupPage(browser: Browser): Promise<Page> {
     const page = await browser.newPage();
