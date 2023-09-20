@@ -1,164 +1,112 @@
-import type { Browser } from "puppeteer";
-import { Base, BrowserScape } from "./base";
-import { Source } from "./base"; // Import the Source enum from your code
+import puppeteer, { Browser, Page } from "puppeteer";
+import { Base, BrowserScape, Source } from "./base";
+import type { ScrapeResult, LatestChapterResult, SeriesInfoResult } from "./base";
 
 export default class AsuraScanScraper implements Base<BrowserScape> {
-  private siteUrl = "https://asura.gg/";
+  private static readonly seriesSelector = ".series";
+  private static readonly elementSelector = ".uta";
 
-  public async scrape(options: BrowserScape): Promise<void> {
-    const browser = options.browser;
-    const url = options.url;
-
+  public async setupPage(browser: Browser): Promise<Page> {
     const page = await browser.newPage();
     await page.setCacheEnabled(false);
+    return page;
+  }
+
+  private isValidSeries(series: any): boolean {
+    return series.title && series.seriesUrl && series.latestChapter && series.chapterUrl;
+  }
+
+  private async extractSeriesData(page: Page): Promise<{
+    title: string;
+    seriesUrl: string;
+    chapterUrl: string;
+    latestChapter: string;
+  } | null> {
+    const elements = await page.$$(AsuraScanScraper.elementSelector);
+
+    // Return the first valid series found, or null if none.
+    for (const pageElement of elements) {
+      const title = await pageElement.$eval("h4", (element) => element.textContent || "");
+      const seriesUrl = await pageElement.$eval("a", (element) => element.getAttribute("href") || "");
+      const latestChapter = await pageElement.$eval("ul li a", (element) => element.textContent || "");
+      const chapterUrl = await pageElement.$eval("ul li a", (element) => element.getAttribute("href") || "");
+
+      const seriesData = {
+        title,
+        seriesUrl,
+        chapterUrl,
+        latestChapter,
+      };
+
+      if (this.isValidSeries(seriesData)) {
+        return seriesData;
+      }
+    }
+
+    return null; // Return null if no valid series found.
+  }
+
+  public async scrape(options: BrowserScape): Promise<ScrapeResult> {
+    const url = options.url;
+    const browser = options.browser;
+    const page = await this.setupPage(browser);
+
     try {
       await page.goto(url, { waitUntil: "networkidle2" });
-      await page.waitForSelector(".series");
+      await page.waitForSelector(AsuraScanScraper.seriesSelector);
 
-      const series = await page.evaluate(() => {
-        const elements = document.getElementsByClassName("uta");
-        const pageElements = Array.from(elements);
-        return pageElements.map((pageElement) => {
-          const title = pageElement.querySelector("h4")?.textContent;
-          const seriesUrl = pageElement.querySelector("a")?.getAttribute("href");
-          const latestChapter = pageElement.querySelector("ul")?.querySelector("li")?.querySelector("a")?.textContent;
-          const chapterUrl = pageElement
-            .querySelector("ul")
-            ?.querySelector("li")
-            ?.querySelector("a")
-            ?.getAttribute("href");
-          return {
-            title,
-            seriesUrl,
-            chapterUrl,
-            latestChapter,
-          };
-        });
-      });
-
-      const validSeries = series.filter((s) => s.title && s.seriesUrl && s.latestChapter && s.chapterUrl);
-      const scraperResults = validSeries.map((s) => {
-        return {
-          title: s.title!,
-          latestChapter: s.latestChapter!,
-          seriesUrl: s.seriesUrl!,
-          source: Source.AsuraScans, // Use the Source enum from your code
-          chapterUrl: s.chapterUrl!,
-        };
-      });
-
-      // Handle your results here, you might want to store or process them as needed.
-
+      return await this.extractSeriesData(page);
     } catch (e) {
       console.error(e);
+      throw e; // Handle the error as needed.
     } finally {
       await page.close();
     }
   }
 
-  public async latestChapter(options: BrowserScape): Promise<string> {
-    // Implement the logic to get the latest chapter here
-    // You can use the `options` parameter to access the browser and URL
-    throw new Error("Method not implemented.");
+  public async latestChapter(options: BrowserScape): Promise<LatestChapterResult> {
+    const url = options.url;
+    const browser = options.browser;
+    const page = await this.setupPage(browser);
+
+    try {
+      await page.goto(url, { waitUntil: "networkidle2" });
+      await page.waitForSelector(AsuraScanScraper.seriesSelector);
+
+      const seriesData = await this.extractSeriesData(page);
+      if (seriesData) {
+        return { latestChapter: seriesData.latestChapter };
+      } else {
+        return null;
+      }
+    } catch (e) {
+      console.error(e);
+      throw e; // Handle the error as needed.
+    } finally {
+      await page.close();
+    }
   }
 
-  public async seriesInfo(options: BrowserScape): Promise<string> {
-    // Implement the logic to get series info here
-    // You can use the `options` parameter to access the browser and URL
-    throw new Error("Method not implemented.");
+  public async seriesInfo(options: BrowserScape): Promise<SeriesInfoResult> {
+    const url = options.url;
+    const browser = options.browser;
+    const page = await this.setupPage(browser);
+
+    try {
+      await page.goto(url, { waitUntil: "networkidle2" });
+      await page.waitForSelector(AsuraScanScraper.seriesSelector);
+
+      const seriesData = await this.extractSeriesData(page);
+      if (seriesData) {
+        return { title: seriesData.title };
+      } else {
+        return null;
+      }
+    } catch (e) {
+      console.error(e);
+      throw e; // Handle the error as needed.
+    } finally {
+      await page.close();
+    }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-// export default class AsuraScanScraper implements Base<BrowserScape> {
-//   private siteUrl = "https://asura.gg/";
-  
-//   public async scrape(browser: Browser, url: string): Promise<ScraperResult[]> {
-//     const page = await browser.newPage();
-//     await page.setCacheEnabled(false);
-//     try {
-//       //page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
-//       await page.goto("https://asura.gg/", { waitUntil: "networkidle2" });
-//       await page.waitForSelector(".series");
-//       await page.screenshot({ path: "asura.png", fullPage: true });
-//       const series = await page.evaluate(() => {
-//         const elements = document.getElementsByClassName("uta");
-//         const pageElements = Array.from(elements);
-//         return pageElements.map((pageElement) => {
-//           const title = pageElement.querySelector("h4")?.textContent;
-//           const seriesUrl = pageElement.querySelector("a")?.getAttribute("href");
-//           const latestChapter = pageElement.querySelector("ul")?.querySelector("li")?.querySelector("a")?.textContent;
-//           const chapterUrl = pageElement
-//             .querySelector("ul")
-//             ?.querySelector("li")
-//             ?.querySelector("a")
-//             ?.getAttribute("href");
-//           return {
-//             title,
-//             seriesUrl,
-//             chapterUrl,
-//             latestChapter,
-//           };
-//         });
-//       });
-
-//       return series
-//         .filter((s) => s.title && s.seriesUrl && s.latestChapter && s.chapterUrl)
-//         .map((s) => {
-//           return {
-//             title: s.title!,
-//             latestChapter: s.latestChapter!,
-//             seriesUrl: s.seriesUrl!,
-//             source: ScraperSource.AsuraScans,
-//             chapterUrl: s.chapterUrl!,
-//           };
-//         });
-//     } catch (e) {
-//       console.error(e);
-//     } finally {
-//       await page.close();
-//     }
-//     return [];
-//   }
-
-//   public async checkIfScrapeable(url: string, browser: Browser): Promise<boolean> {
-//     const page = await browser.newPage();
-//     await page.goto(url, { waitUntil: "networkidle2" });
-//     await page.waitForSelector("h1.entry-title");
-//     const title = await page.evaluate(() => {
-//       const title = document.querySelector("h1.entry-title")?.textContent;
-
-//       page.close();
-
-//       return title;
-//     });
-
-//     page.close();
-
-//     return title !== null && title !== undefined;
-//   }
-
-//   public async getTitleName(url: string, browser: Browser): Promise<string> {
-//     const page = await browser.newPage();
-//     await page.goto(url, { waitUntil: "networkidle2" });
-//     await page.waitForSelector("h1.entry-title");
-//     const title = await page.evaluate(() => {
-//       const title = document.querySelector("h1.entry-title")?.textContent;
-//       page.close();
-//       return title;
-//     });
-
-//     page.close();
-//     return title!;
-//   }
-// }

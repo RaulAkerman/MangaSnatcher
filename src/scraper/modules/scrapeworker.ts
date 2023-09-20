@@ -5,8 +5,8 @@ import type { Series } from '@prisma/client';
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { decode } from "./base"
 import TaskType, { Check, Extract, Latest } from './base.ts';
-
-//#region 
+import ReturnType, {CheckReturn, ExtractReturn, LatestReturn} from "./base.ts"
+//#region Interfaces
 
 import { BrowserSources, BrowserScape, ApiScrape, ApiSources, Base, Source, AsuraScans, MangaSee, ReaperScans, MangaDex } from './base';
 type BrowserScraperMapper = {
@@ -72,7 +72,7 @@ const rawData = args[0]
 const data = decode<TaskType>(rawData)
 
 for ( const task of data.task) {
-
+  
 }
 
 
