@@ -148,7 +148,6 @@ export interface Base<T> {
 
 export type ScrapeResult = {
   title: string;
-  seriesUrl: string;
   chapterUrl: string;
   latestChapter: string;
 } | null;

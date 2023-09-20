@@ -1,10 +1,10 @@
-import puppeteer, { Browser, Page } from "puppeteer";
+import { Browser, Page } from "puppeteer";
 import { Base, BrowserScape, Source } from "./base";
 import type { ScrapeResult, LatestChapterResult, SeriesInfoResult } from "./base";
 
 export default class AsuraScanScraper implements Base<BrowserScape> {
   private static readonly seriesSelector = ".series";
-  private static readonly elementSelector = ".uta";
+  private static readonly elementSelector = ".postbody";
 
   public async setupPage(browser: Browser): Promise<Page> {
     const page = await browser.newPage();
@@ -13,12 +13,11 @@ export default class AsuraScanScraper implements Base<BrowserScape> {
   }
 
   private isValidSeries(series: any): boolean {
-    return series.title && series.seriesUrl && series.latestChapter && series.chapterUrl;
+    return series.title && series.latestChapter && series.chapterUrl;
   }
 
   private async extractSeriesData(page: Page): Promise<{
     title: string;
-    seriesUrl: string;
     chapterUrl: string;
     latestChapter: string;
   } | null> {
@@ -26,14 +25,14 @@ export default class AsuraScanScraper implements Base<BrowserScape> {
 
     // Return the first valid series found, or null if none.
     for (const pageElement of elements) {
-      const title = await pageElement.$eval("h4", (element) => element.textContent || "");
-      const seriesUrl = await pageElement.$eval("a", (element) => element.getAttribute("href") || "");
-      const latestChapter = await pageElement.$eval("ul li a", (element) => element.textContent || "");
+      const title = await pageElement.$eval('.entry-title', (element) => element.textContent);
+      const latestChapter = await pageElement.$eval('.chapternum', (element) => element.textContent);
       const chapterUrl = await pageElement.$eval("ul li a", (element) => element.getAttribute("href") || "");
-
+      if(!title || !latestChapter || !chapterUrl){
+        return null
+      }
       const seriesData = {
         title,
-        seriesUrl,
         chapterUrl,
         latestChapter,
       };
