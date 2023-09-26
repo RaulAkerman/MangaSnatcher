@@ -1,5 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// // This is your Prisma schema file,
+// // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -15,32 +15,47 @@ model Guild {
   name      String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  channelId String
 
-  series Series[]
+  seriesInGuild SeriesInGuild[]
+  Series        Series?         @relation(fields: [seriesId], references: [id])
+  seriesId      String?
 
   @@map("guilds")
 }
 
+model SeriesInGuild {
+  id        String   @id @default(uuid())
+  series    Series   @relation(fields: [seriesId], references: [id])
+  seriesId  String   @map("series_id")
+  guild     Guild    @relation(fields: [guildId], references: [id])
+  guildId   String   @map("guild_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([seriesId, guildId])
+  @@map("series_in_guild")
+}
+
 model Series {
-  id            String    @id @default(uuid())
-  title         String
-  url           String
-  source        String
-  latestChapter String?   @map("latest_chapter")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
-  lastSrapedAt  DateTime? @map("last_sraped_at")
-  channelId     String    
+  id                String    @id @default(uuid())
+  title             String
+  url               String    @unique
+  source            String
+  latestChapter     String?   @map("latest_chapter")
+  latestChapterUrl  String?  
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at")
+  lastScrapedAt     DateTime? @map("last_scraped_at")
 
-  guild   Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
-  guildId String @map("guild_id")
+  guilds          Guild[]
+  SeriesInGuild   SeriesInGuild[]
 
-  @@unique([title, source, guildId])
   @@map("series")
 }
 
 model LastScrape {
   id        String   @id @default(uuid())
   timestamp DateTime @default(now()) @map("timestamp")
+
   @@map("last_scrape")
-} 
+}

@@ -5,10 +5,7 @@ import prisma from "./prisma";
 import * as schedule from "node-schedule";
 import { Client, Events, GatewayIntentBits, Guild, channelLink, managerToFetchingStrategyOptions } from "discord.js";
 import { Message } from "discord.js";
-import AsuraScans from "./scraper/modules/asurascans";
-import MangaSee from "./scraper/modules/mangasee";
 import client from "./client";
-import { Browser, Puppeteer } from "puppeteer";
 import {
   getChannelInstances,
   getSeriesByChannelId,
@@ -19,6 +16,10 @@ import {
 } from "./database";
 
 import { Series } from "@prisma/client";
+import { deflateSync } from "bun";
+import { discordClientMessage } from "./client";
+import { MangaSee } from "scraper/modules/base";
+
 
 //import log from "why-is-node-running";
 dotenv.config();
@@ -40,7 +41,6 @@ const test: Series[] = [
   },
 ];
 
-runner(test);
 
 // To run every 6 hours, change the first argument to "0 */6 * * *"
 // To run every 12 hours, change the first argument to "0 */12 * * *"
@@ -305,180 +305,43 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
 
   const AcceptedDomains = ["asura.gg", "mangadex.org", "mangasee123.com"];
 
-  function extractDomainName(url: string): string | null {
-    const regex = /^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n?]+)/gim;
-    const match = regex.exec(url);
-    return match ? match[1] : null;
-  }
+  // function extractDomainName(url: string): string | null {
+  //   const regex = /^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n?]+)/gim;
+  //   const match = regex.exec(url);
+  //   return match ? match[1] : null;
+  // }
 
-  async function checkUrl(message: Message, url: string): Promise<void> {
-    const domainName = extractDomainName(url);
-    if (!domainName) {
-      await message.channel.send(`Sorry, ${url} is not a valid URL.`);
-      return;
-    }
-    if (!AcceptedDomains.includes(domainName)) {
-      await message.channel.send(`Sorry, ${domainName} is not an supported domain.`);
-      return;
-    }
-    await message.channel.send(`Great, ${domainName} is a supported domain!`);
-  }
+  // async function checkUrl(message: Message, url: string): Promise<void> {
+  //   const domainName = extractDomainName(url);
+  //   if (!domainName) {
+  //     await message.channel.send(`Sorry, ${url} is not a valid URL.`);
+  //     return;
+  //   }
+  //   if (!AcceptedDomains.includes(domainName)) {
+  //     await message.channel.send(`Sorry, ${domainName} is not an supported domain.`);
+  //     return;
+  //   }
+  //   await message.channel.send(`Great, ${domainName} is a supported domain!`);
+  // }
+  //Start   !maybe use a public class to separate and reduce excessive type-checking!
+  
 
-  client.on(Events.MessageCreate, async (message: Message) => {
-    if (message.content.startsWith("!check")) {
-      const url = message.content.slice("!check".length).trim();
-      await checkUrl(message, url);
-    }
 
-    if (message.content.startsWith("!add")) {
-      const url = message.content.slice("!add".length).trim();
-      const domainName = extractDomainName(url);
+  const discordClient = new discordClientMessage()
+  client.on('messageCreate', async (message: Message) => {
+    if(!message.guild) {
+      message.reply("I dont do DM's use commands in channel")
+      return
+    } 
+    await discordClient.UserMessageHandler(message);
 
-      if (!domainName) {
-        await message.channel.send(`Sorry, ${url} is not a valid URL.`);
-        return;
-      }
-      if (!AcceptedDomains.includes(domainName)) {
-        await message.channel.send(`Sorry, ${domainName} is not an supported domain.`);
-        return;
-      }
-
-      // Check if the series is already being watched
-      if (domainName === "asura.gg") {
-        const existingSeries = await prisma.series.findFirst({
-          where: {
-            title: await asurascans.getTitleName(url, browser),
-            url: url,
-            guildId: message.guildId!,
-          },
-        });
-        if (existingSeries) {
-          await message.channel.send(`<${url}> is already being watched!`);
-          return;
-        }
-      } else if (domainName === "mangasee123.com") {
-        if (!browser) {
-          throw new Error("browser doesnt exist");
-        }
-        const existingSeries = await prisma.series.findFirst({
-          where: {
-            url: url,
-            title: await mangasee.getTitleName(url, browser),
-            guildId: message.guildId!,
-          },
-        });
-        if (existingSeries) {
-          await message.channel.send(`<${url}> is already being watched!`);
-          return;
-        }
-      }
-
-      // Check if the series is scrapeable
-
-      //Send a message to the channel saying that the bot is checking if the series is scrapeable, delete the message after 10 seconds
-      const checkingMessage = await message.channel.send(`Checking if ${url} is scrapeable...`);
-
-      setTimeout(async () => {
-        await checkingMessage.delete();
-      }, 10000);
-
-      try {
-        if (domainName === "asura.gg") {
-          await asurascans.checkIfScrapeable(url, browser);
-        } else if (domainName === "mangasee123.com") {
-          await mangasee.checkIfScrapeable(url, browser);
-        }
-      } catch (e) {
-        await message.channel.send(
-          `${url} is not scrapeable...\n` + 'Make sure to link the URL at the "Home" page of the series.',
-        );
-        return;
-      }
-
-      //Set seriesTitle depending on the domain name
-      let seriesTitle = "";
-      if (domainName === "asura.gg") {
-        seriesTitle = await asurascans.getTitleName(url, browser);
-      } else if (domainName === "mangasee123.com") {
-        seriesTitle = await mangasee.getTitleName(url, browser);
-      }
-
-      console.log(seriesTitle);
-      console.log(domainName);
-      console.log(url);
-      console.log(message.guildId!);
-
-      await prisma.series.upsert({
-        where: {
-          title_source_guildId: {
-            title: seriesTitle,
-            source: domainName,
-            guildId: message.guildId!,
-          },
-        },
-        update: {
-          url: url,
-        },
-        create: {
-          title: seriesTitle,
-          source: domainName,
-          guildId: message.guildId!,
-          url: url,
-          channelId: message.channelId!,
-        },
-      });
-      await message.channel.send(`Added ${seriesTitle} to the watchlist!`);
-    }
-
-    if (message.content.startsWith("!remove")) {
-      const url = message.content.slice("!remove".length).trim();
-      const domainName = extractDomainName(url);
-      if (!domainName) {
-        await message.channel.send(`Sorry, ${url} is not a valid URL.`);
-        return;
-      }
-      if (!AcceptedDomains.includes(domainName)) {
-        await message.channel.send(`Sorry, ${domainName} is not an supported domain.`);
-        return;
-      }
-
-      //Set seriesTitle depending on the domain name
-
-      let seriesTitle = "";
-      if (domainName === "asura.gg") {
-        seriesTitle = await asurascans.getTitleName(url, browser);
-      } else if (domainName === "mangasee123.com") {
-        seriesTitle = await mangasee.getTitleName(url, browser);
-      }
-
-      console.log(seriesTitle);
-      console.log(domainName);
-      console.log(url);
-      console.log(message.guildId!);
-
-      await prisma.series.delete({
-        where: {
-          title_source_guildId: {
-            title: seriesTitle,
-            source: domainName,
-            guildId: message.guildId!,
-          },
-        },
-      });
-      await message.channel.send(`Removed ${seriesTitle} from the list of series to watch!`);
-    }
-
-    if (message.content.startsWith("!list")) {
-      const series = await prisma.series.findMany({
-        where: {
-          guildId: message.guildId!,
-        },
-      });
-      await message.channel.send(
-        `Here are the series you are watching:\n${series.map((s) => s.title + " : " + s.url).join("\n")}`,
-      );
-    }
   });
+
+
+}
+
+
+
 
   console.log("trying to log in");
   await client.login(process.env.DISCORD_TOKEN);
@@ -489,3 +352,162 @@ const job = schedule.scheduleJob("*/30 * * * *", async function () {
   job.invoke();
   console.log("Running");
 })().catch((e) => console.error(e));
+
+
+
+
+// client.on(Events.MessageCreate, async (message: Message) => {
+//   if (message.content.startsWith("!check")) {
+//     const url = message.content.slice("!check".length).trim();
+//     await checkUrl(message, url);
+//   }
+
+//   if (message.content.startsWith("!add")) {
+//     const url = message.content.slice("!add".length).trim();
+//     const domainName = extractDomainName(url);
+
+//     if (!domainName) {
+//       await message.channel.send(`Sorry, ${url} is not a valid URL.`);
+//       return;
+//     }
+//     if (!AcceptedDomains.includes(domainName)) {
+//       await message.channel.send(`Sorry, ${domainName} is not an supported domain.`);
+//       return;
+//     }
+
+//     // Check if the series is already being watched
+//     if (domainName === "asura.gg") {
+//       const existingSeries = await prisma.series.findFirst({
+//         where: {
+//           title: await asurascans.getTitleName(url, browser),
+//           url: url,
+//           guildId: message.guildId!,
+//         },
+//       });
+//       if (existingSeries) {
+//         await message.channel.send(`<${url}> is already being watched!`);
+//         return;
+//       }
+//     } else if (domainName === "mangasee123.com") {
+//       if (!browser) {
+//         throw new Error("browser doesnt exist");
+//       }
+//       const existingSeries = await prisma.series.findFirst({
+//         where: {
+//           url: url,
+//           title: await mangasee.getTitleName(url, browser),
+//           guildId: message.guildId!,
+//         },
+//       });
+//       if (existingSeries) {
+//         await message.channel.send(`<${url}> is already being watched!`);
+//         return;
+//       }
+//     }
+
+//     // Check if the series is scrapeable
+
+//     //Send a message to the channel saying that the bot is checking if the series is scrapeable, delete the message after 10 seconds
+//     const checkingMessage = await message.channel.send(`Checking if ${url} is scrapeable...`);
+
+//     setTimeout(async () => {
+//       await checkingMessage.delete();
+//     }, 10000);
+
+//     try {
+//       if (domainName === "asura.gg") {
+//         await asurascans.checkIfScrapeable(url, browser);
+//       } else if (domainName === "mangasee123.com") {
+//         await mangasee.checkIfScrapeable(url, browser);
+//       }
+//     } catch (e) {
+//       await message.channel.send(
+//         `${url} is not scrapeable...\n` + 'Make sure to link the URL at the "Home" page of the series.',
+//       );
+//       return;
+//     }
+
+//     //Set seriesTitle depending on the domain name
+//     let seriesTitle = "";
+//     if (domainName === "asura.gg") {
+//       seriesTitle = await asurascans.getTitleName(url, browser);
+//     } else if (domainName === "mangasee123.com") {
+//       seriesTitle = await mangasee.getTitleName(url, browser);
+//     }
+
+//     console.log(seriesTitle);
+//     console.log(domainName);
+//     console.log(url);
+//     console.log(message.guildId!);
+
+//     await prisma.series.upsert({
+//       where: {
+//         title_source_guildId: {
+//           title: seriesTitle,
+//           source: domainName,
+//           guildId: message.guildId!,
+//         },
+//       },
+//       update: {
+//         url: url,
+//       },
+//       create: {
+//         title: seriesTitle,
+//         source: domainName,
+//         guildId: message.guildId!,
+//         url: url,
+//         channelId: message.channelId!,
+//       },
+//     });
+//     await message.channel.send(`Added ${seriesTitle} to the watchlist!`);
+//   }
+
+//   if (message.content.startsWith("!remove")) {
+//     const url = message.content.slice("!remove".length).trim();
+//     const domainName = extractDomainName(url);
+//     if (!domainName) {
+//       await message.channel.send(`Sorry, ${url} is not a valid URL.`);
+//       return;
+//     }
+//     if (!AcceptedDomains.includes(domainName)) {
+//       await message.channel.send(`Sorry, ${domainName} is not an supported domain.`);
+//       return;
+//     }
+
+//     //Set seriesTitle depending on the domain name
+
+//     let seriesTitle = "";
+//     if (domainName === "asura.gg") {
+//       seriesTitle = await asurascans.getTitleName(url, browser);
+//     } else if (domainName === "mangasee123.com") {
+//       seriesTitle = await mangasee.getTitleName(url, browser);
+//     }
+
+//     console.log(seriesTitle);
+//     console.log(domainName);
+//     console.log(url);
+//     console.log(message.guildId!);
+
+//     await prisma.series.delete({
+//       where: {
+//         title_source_guildId: {
+//           title: seriesTitle,
+//           source: domainName,
+//           guildId: message.guildId!,
+//         },
+//       },
+//     });
+//     await message.channel.send(`Removed ${seriesTitle} from the list of series to watch!`);
+//   }
+
+//   if (message.content.startsWith("!list")) {
+//     const series = await prisma.series.findMany({
+//       where: {
+//         guildId: message.guildId!,
+//       },
+//     });
+//     await message.channel.send(
+//       `Here are the series you are watching:\n${series.map((s) => s.title + " : " + s.url).join("\n")}`,
+//     );
+//   }
+// });

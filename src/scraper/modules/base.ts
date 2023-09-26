@@ -2,13 +2,14 @@ import type { Browser } from "puppeteer";
 import puppeteer from "puppeteer";
 // import AsuraScanscraper from "./asurascans"
 import type { Series } from "@prisma/client";
+import { getJSDocReturnType } from "typescript";
 
 // Types
 
 export interface ScraperResult {
   title: string;
-  seriesUrl: string;
-  chapterUrl: string;
+  url: string;
+  latestChapterUrl: string;
   latestChapter: string;
   source: Source;
 }
@@ -47,27 +48,27 @@ export interface Latest extends BaseTask {
 }
 
 export interface CheckReturn extends BaseTask {
-  type: "check-return";
+  type: "check";
   task: Array<{
     title: string;
   }>;
 }
 
 export interface ExtractReturn extends BaseTask {
-  type: "extract-return";
+  type: "extract";
   task: Array<{
     title: string;
-    chapterurl: string;
-    seriesUrl: string;
+    Url: string;
+    latestChapterUrl: string;
     latestChapter: string;
   }>;
 }
 
 export interface LatestReturn extends BaseTask {
-  type: "extract-return";
+  type: "latest";
   task: Array<{
     id: string;
-    ChapterUrl: string;
+    latestChapterUrl: string;
     LatestChapter: string;
   }>;
 }
@@ -77,27 +78,22 @@ export type ReturnType = CheckReturn | ExtractReturn | LatestReturn;
 
 // Type Check Functions
 
-export const isTypeCheck = (task: TaskType): task is Check => {
+export const isTypeCheck = (task: ReturnType): task is CheckReturn => {
   return task.type === "check";
 };
 
-export const isTypeExtract = (task: TaskType): task is Extract => {
+export const isTypeExtract = (task: ReturnType): task is ExtractReturn => {
   return task.type === "extract";
 };
 
-export const isTypeLatest = (task: TaskType): task is Latest => {
+export const isTypeLatest = (task: ReturnType): task is LatestReturn => {
   return task.type === "latest";
 };
 
-// Payload Type Checker Function
-
-export const PayloadTypeChecker = (params: TaskType) => {
-  if (isTypeCheck(params) || isTypeExtract(params) || isTypeLatest(params)) {
-    return true;
-  } else {
-    return new Error("Task passed into Payload is invalid");
-  }
-};
+export function decode(data: string):ReturnType {
+  const decodedData = JSON.parse(atob(data));
+  return decodedData
+}
 
 // Encoding and Decoding Functions
 
@@ -105,9 +101,6 @@ export const encode = (data: any): string => {
   return btoa(JSON.stringify(data));
 };
 
-export function decode<T>(data: string): T {
-  return JSON.parse(atob(data));
-}
 
 // Utility Function
 
@@ -125,11 +118,13 @@ export enum ScraperMethod {
   Latest = "latest",
 }
 
+
+
 export enum Source {
   AsuraScans = "asura.gg",
   MangaSee = "mangasee123.com",
-  MangaDex = "MangaDex",
-  ReaperScans = "ReaperScans",
+  MangaDex = "mangadex.org",
+  ReaperScans = "reaperscans.com",
 }
 
 export type BrowserSources = Source.AsuraScans | Source.MangaSee | Source.ReaperScans;

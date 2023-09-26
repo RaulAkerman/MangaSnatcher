@@ -1,7 +1,8 @@
 import { Series } from '@prisma/client';
-import TaskType, { Check, Extract, Latest } from './base.ts';
-import { getDomainName, BaseTask } from './base.ts';
+import TaskType, { Check, Extract, ExtractReturn, Latest, LatestReturn, CheckReturn, ReturnType } from './base.ts';
+import { getDomainName, BaseTask, decode } from './base.ts';
 import { ScraperMethod } from './base.ts';
+
 
 export function generateBaseTask(method: ScraperMethod): TaskType | undefined {
   let taskType: TaskType | undefined;
@@ -87,9 +88,9 @@ export function createTask(
   }
 }
 
-//Calls spawns worker and provides it with a tasklist and taskmethod
-export const scraperCall = async (seriesInput: Series[] | Series | string, method: ScraperMethod) => {
 
+//Calls spawns worker and provides it with a tasklist and taskmethod
+export async function scraperCall<T>(seriesInput: Series[] | Series | string, method: ScraperMethod): Promise<T> {
   const tasklist = createTask(generateBaseTask(method), generateTaskData(seriesInput));
 
   const base64 = btoa(JSON.stringify(tasklist));
@@ -99,11 +100,8 @@ export const scraperCall = async (seriesInput: Series[] | Series | string, metho
     env: {},
   });
 
-  const encodedoutput = await new Response(proc.stdout).text();
-
-  let output = atob(encodedoutput)
-
-  console.log(output)
-  return true
+  const encodedOutput = await new Response(proc.stdout).text();
+  const decodedResult = decode(encodedOutput);
+  return decodedResult as T;
 };
 
