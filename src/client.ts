@@ -1,13 +1,13 @@
 import { Client, Events, GatewayIntentBits, managerToFetchingStrategyOptions } from "discord.js";
 import { Message } from "discord.js";
 import { CheckReturn, ExtractReturn, LatestReturn, Source, getDomainName } from "scraper/modules/base";
-import { urlSearch, addSeriesToGuild, removeSeriesFromGuild, findSeriesByGuildId  } from "./database.ts";
-import { ScraperMethod } from "scraper/modules/base";
-import { scraperCall } from "scraper/modules/handler";
+import { urlSearch, addSeriesToGuild, removeSeriesFromGuild, findSeriesByGuildId  } from "../prisma/Models/database.ts";
+import { ScraperMethod } from "./scraper/abstract/BaseScraper.ts";
+import { scraperCall } from "./scraper/child-process/handler.ts";
 
-const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
-});
+// const client = new Client({
+//   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
+// });
 
 enum DiscordUserCommand {
   UserCheck = "!check",
@@ -23,7 +23,7 @@ interface DiscordInput<T> {
   ifList(message: Message): Promise<Message<true>> | Promise<Message<false>>
 }
 
-export interface addSeriesToGuildInterface {
+interface addSeriesToGuildInterface {
   title: string,
   url: string,
   source: string,
@@ -31,7 +31,7 @@ export interface addSeriesToGuildInterface {
   latestChapterUrl: string 
 }
 
-export class discordClientMessage {
+class discordClientMessage {
   private extractDomainName(url: string): string | null {
     const regex = /^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n?]+)/gim;
     const match = regex.exec(url);
@@ -134,8 +134,3 @@ export class discordClientMessage {
 
 
 
-
-
-
-
-export default client;

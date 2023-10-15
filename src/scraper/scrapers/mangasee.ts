@@ -1,6 +1,12 @@
 import { Browser, Page } from "puppeteer";
-import { ScraperResult, Base, BrowserScape } from "./base";
-import type { ScrapeResult, LatestChapterResult, SeriesInfoResult } from "./base";
+import {
+  Base,
+  BrowserScape,
+  Source,
+  ScrapeResult,
+  LatestChapterResult,
+  SeriesInfoResult,
+} from "../abstract/BaseScraper";
 
 export default class MangaSeeScraper implements Base<BrowserScape> {
   private static readonly seriesSelector = ".series";
@@ -41,7 +47,7 @@ export default class MangaSeeScraper implements Base<BrowserScape> {
       const chapterUrl = await pageElement.$eval("a.list-group-item.ChapterLink.ng-scope", (element) =>
         element.getAttribute("href"),
       );
-        //MAJOR CORRECTION NEEDED Chapters come out as /read-online/Oshi-no-Ko-chapter-126-page-1.html !!!!! NEED TO ADD SOURCE INFRONT!!!!
+      //MAJOR CORRECTION NEEDED Chapters come out as /read-online/Oshi-no-Ko-chapter-126-page-1.html !!!!! NEED TO ADD SOURCE INFRONT!!!!
       if (!title || !latestChapter || !chapterUrl) {
         return null;
       }

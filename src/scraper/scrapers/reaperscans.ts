@@ -1,10 +1,16 @@
 import { Browser, Page } from "puppeteer";
-import { Base, BrowserScape, Source } from "./base";
-import type { ScrapeResult, LatestChapterResult, SeriesInfoResult } from "./base";
+import {
+  Base,
+  BrowserScape,
+  Source,
+  ScrapeResult,
+  LatestChapterResult,
+  SeriesInfoResult,
+} from "../abstract/BaseScraper";
 
-export default class AsuraScanScraper implements Base<BrowserScape> {
+export default class ReaperScanScraper implements Base<BrowserScape> {
   private static readonly seriesSelector = ".series";
-  private static readonly elementSelector = ".postbody";
+  private static readonly elementSelector = ".mb-auto";
 
   public async setupPage(browser: Browser): Promise<Page> {
     const page = await browser.newPage();
@@ -21,16 +27,19 @@ export default class AsuraScanScraper implements Base<BrowserScape> {
     chapterUrl: string;
     latestChapter: string;
   } | null> {
-    const elements = await page.$$(AsuraScanScraper.elementSelector);
-
-    // Return the first valid series found, or null if none.
+    const elements = await page.$$(ReaperScanScraper.elementSelector);
     for (const pageElement of elements) {
-      const title = await pageElement.$eval('.entry-title', (element) => element.textContent);
-      const latestChapter = await pageElement.$eval('.chapternum', (element) => element.textContent);
-      const chapterUrl = await pageElement.$eval("ul li a", (element) => element.getAttribute("href") || "");
-      if(!title || !latestChapter || !chapterUrl){
-        return null
+      const title = await pageElement.$eval("h1", (element) => element.textContent?.trim() || null);
+      const latestChapter = await pageElement.$eval(
+        "p.truncate.font-medium.text-neutral-200",
+        (element) => element.textContent?.trim() || null,
+      );
+      const chapterUrl = await pageElement.$eval("a", (element) => element.getAttribute("href"));
+
+      if (!title || !latestChapter || !chapterUrl) {
+        return null;
       }
+
       const seriesData = {
         title,
         chapterUrl,
@@ -52,7 +61,7 @@ export default class AsuraScanScraper implements Base<BrowserScape> {
 
     try {
       await page.goto(url, { waitUntil: "networkidle2" });
-      await page.waitForSelector(AsuraScanScraper.seriesSelector);
+      await page.waitForSelector(ReaperScanScraper.seriesSelector);
 
       return await this.extractSeriesData(page);
     } catch (e) {
@@ -70,7 +79,7 @@ export default class AsuraScanScraper implements Base<BrowserScape> {
 
     try {
       await page.goto(url, { waitUntil: "networkidle2" });
-      await page.waitForSelector(AsuraScanScraper.seriesSelector);
+      await page.waitForSelector(ReaperScanScraper.seriesSelector);
 
       const seriesData = await this.extractSeriesData(page);
       if (seriesData) {
@@ -93,7 +102,7 @@ export default class AsuraScanScraper implements Base<BrowserScape> {
 
     try {
       await page.goto(url, { waitUntil: "networkidle2" });
-      await page.waitForSelector(AsuraScanScraper.seriesSelector);
+      await page.waitForSelector(ReaperScanScraper.seriesSelector);
 
       const seriesData = await this.extractSeriesData(page);
       if (seriesData) {

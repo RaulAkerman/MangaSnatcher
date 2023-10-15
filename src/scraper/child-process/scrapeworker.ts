@@ -1,14 +1,26 @@
-import MangaSeeScraper from './mangasee';
-import AsuraScanScraper from './asurascans';
+import MangaSeeScraper from '../scrapers/mangasee';
+import AsuraScanScraper from '../scrapers/asurascans';
 import puppeteer from 'puppeteer-extra';
 import type { Series } from '@prisma/client';
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import { decode } from "./base"
-import TaskType, { Check, Extract, Latest } from './base.ts';
-import ReturnType, {CheckReturn, ExtractReturn, LatestReturn} from "./base.ts"
-//#region Interfaces
+import { decode } from "../abstract/BaseScraper";
+import {
+  TaskType,
 
-import { BrowserSources, BrowserScape, ApiScrape, ApiSources, Base, Source, AsuraScans, MangaSee, ReaperScans, MangaDex } from './base';
+  BrowserSources,
+  BrowserScape,
+  ApiScrape,
+  ApiSources,
+  Base,
+  Source,
+  AsuraScans,
+  MangaSee,
+  ReaperScans,
+  MangaDex,
+} from '../abstract/BaseScraper.ts';
+
+
+
 type BrowserScraperMapper = {
   [key in BrowserSources]: Base<BrowserScape>;
 };
@@ -55,6 +67,16 @@ const scraperMapper: ScraperMapper = {
 
 //#endregion
 
+const Scrape =async (params:type) => {
+  
+}
+const apiScrape =async (params:type) => {
+  
+}
+
+
+
+
 const scraper = <S extends Source>(source: S): Base<SourceToScrapeType[S]> => {
   const base = scraperMapper[source];
   if (!base) {
@@ -69,7 +91,9 @@ const args = Bun.argv.slice(2)
 
 const rawData = args[0]
 
-const data = decode<TaskType>(rawData)
+const data = decode(rawData)
+
+
 
 for ( const task of data.task) {
   

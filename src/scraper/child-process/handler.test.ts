@@ -1,7 +1,7 @@
 import { Series } from "@prisma/client";
-import TaskType, { Check, Extract, Latest } from "./base.ts";
-import { getDomainName, BaseTask } from "./base.ts";
-import { ScraperMethod } from "./base.ts";
+import TaskType, { Check, Extract, Latest } from "../abstract/BaseScraper.ts";
+import { getDomainName, BaseTask } from "../abstract/BaseScraper.ts";
+import { ScraperMethod } from "../abstract/BaseScraper.ts";
 import {
   generateBaseTask,
   generateTaskData,

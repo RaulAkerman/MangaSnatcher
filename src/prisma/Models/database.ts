@@ -1,9 +1,14 @@
-import { ExtractReturn } from "scraper/modules/base";
+import { ExtractReturn } from "../../scraper/abstract/BaseScraper";
 import { addSeriesToGuildInterface } from "client";
 import prisma from "./prisma";
+import { GatewayIntentBits } from "discord.js";
+
+// const client = new Client({
+//   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
+// });
 
 //checks if a guild is currently watching a series
-export const urlSearch = async (inputUrl: string, guildId: string) => {
+const isWatchedByGuild = async (inputUrl: string, guildId: string) => {
   const results = await prisma.series.findMany({
     where: {
       url: inputUrl,
@@ -47,7 +52,7 @@ export async function addSeriesToGuild(guildId: string, seriesData:addSeriesToGu
         },
       });
 
-      // Return an object indicating that the series was added
+      // Return an object indicating what happened
       return { series: existingSeries, action: 'Series was added' };
     }
 
